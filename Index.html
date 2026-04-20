@@ -1,0 +1,952 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Club MatiPerezFit</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --negro: #0a0a0a;
+  --gris-osc: #141414;
+  --gris-med: #1e1e1e;
+  --gris-borde: #2a2a2a;
+  --gris-txt: #888;
+  --blanco: #f5f5f5;
+  --volumen: #c8ff00;
+  --definicion: #ff6b35;
+  --transform: #00c9a7;
+  --acento: #c8ff00;
+}
+* { margin:0; padding:0; box-sizing:border-box; }
+html { scroll-behavior: smooth; }
+body { background:var(--negro); color:var(--blanco); font-family:'DM Sans',sans-serif; min-height:100vh; overflow-x:hidden; }
+
+/* ── LOADING ── */
+#loading { position:fixed; inset:0; background:var(--negro); display:flex; align-items:center; justify-content:center; z-index:9999; transition:opacity .4s; }
+#loading.hidden { opacity:0; pointer-events:none; }
+.loading-logo { font-family:'Bebas Neue',sans-serif; font-size:3rem; color:var(--acento); letter-spacing:.2em; animation: pulse 1s ease-in-out infinite alternate; }
+@keyframes pulse { from{opacity:.3} to{opacity:1} }
+
+/* ── VIEWS ── */
+.view { display:none; min-height:100vh; animation: fadeIn .3s ease; }
+.view.active { display:flex; flex-direction:column; }
+@keyframes fadeIn { from{opacity:0;transform:translateY(8px)} to{opacity:1;transform:translateY(0)} }
+
+/* ── NAV ── */
+nav { display:flex; align-items:center; justify-content:space-between; padding:1rem 1.5rem; border-bottom:1px solid var(--gris-borde); position:sticky; top:0; z-index:100; background:rgba(10,10,10,.95); backdrop-filter:blur(12px); }
+.nav-logo { font-family:'Bebas Neue',sans-serif; font-size:1.4rem; color:var(--acento); letter-spacing:.15em; }
+.nav-right { display:flex; align-items:center; gap:.75rem; }
+.nav-badge { font-family:'DM Mono',monospace; font-size:.65rem; padding:.25rem .6rem; border-radius:2px; text-transform:uppercase; letter-spacing:.08em; }
+.nav-badge.fase { background:var(--gris-med); color:var(--gris-txt); border:1px solid var(--gris-borde); }
+.nav-badge.obj { border:1px solid; }
+.nav-badge.obj.volumen { color:var(--volumen); border-color:var(--volumen); }
+.nav-badge.obj.definicion { color:var(--definicion); border-color:var(--definicion); }
+.nav-badge.obj.transform { color:var(--transform); border-color:var(--transform); }
+.btn-icon { background:var(--gris-med); border:1px solid var(--gris-borde); color:var(--gris-txt); width:36px; height:36px; border-radius:6px; cursor:pointer; display:flex; align-items:center; justify-content:center; font-size:1.1rem; transition:all .2s; }
+.btn-icon:hover { background:var(--gris-borde); color:var(--blanco); }
+
+/* ── BUTTONS ── */
+.btn { display:inline-flex; align-items:center; justify-content:center; gap:.5rem; padding:.75rem 1.5rem; border-radius:4px; font-family:'DM Sans',sans-serif; font-weight:600; font-size:.9rem; cursor:pointer; border:none; transition:all .2s; letter-spacing:.02em; }
+.btn-primary { background:var(--acento); color:var(--negro); }
+.btn-primary:hover { background:#d4ff1a; transform:translateY(-1px); }
+.btn-secondary { background:transparent; color:var(--blanco); border:1px solid var(--gris-borde); }
+.btn-secondary:hover { border-color:var(--blanco); }
+.btn-danger { background:transparent; color:#ff4444; border:1px solid #ff444433; }
+.btn-danger:hover { background:#ff444411; }
+.btn-full { width:100%; }
+.btn-sm { padding:.5rem 1rem; font-size:.8rem; }
+
+/* ── LOGIN ── */
+#view-login { align-items:center; justify-content:center; padding:2rem; background: radial-gradient(ellipse at 50% 0%, #1a1f00 0%, var(--negro) 60%); }
+.login-box { width:100%; max-width:380px; }
+.login-logo { font-family:'Bebas Neue',sans-serif; font-size:3.5rem; color:var(--acento); letter-spacing:.2em; text-align:center; margin-bottom:.25rem; }
+.login-sub { text-align:center; color:var(--gris-txt); font-size:.85rem; margin-bottom:2.5rem; letter-spacing:.05em; text-transform:uppercase; }
+.form-group { margin-bottom:1.25rem; }
+.form-label { display:block; font-size:.75rem; color:var(--gris-txt); margin-bottom:.5rem; text-transform:uppercase; letter-spacing:.08em; font-family:'DM Mono',monospace; }
+.form-input { width:100%; background:var(--gris-med); border:1px solid var(--gris-borde); color:var(--blanco); padding:.75rem 1rem; border-radius:4px; font-family:'DM Sans',sans-serif; font-size:.95rem; transition:border-color .2s; }
+.form-input:focus { outline:none; border-color:var(--acento); }
+.login-error { color:#ff4444; font-size:.8rem; text-align:center; margin-top:.75rem; min-height:1.2rem; }
+.login-divider { text-align:center; color:var(--gris-txt); font-size:.75rem; margin:1.5rem 0; position:relative; }
+.login-divider::before, .login-divider::after { content:''; position:absolute; top:50%; width:40%; height:1px; background:var(--gris-borde); }
+.login-divider::before { left:0; }
+.login-divider::after { right:0; }
+
+/* ── ONBOARDING ── */
+#view-onboarding { padding:0; background:var(--negro); }
+.onboard-nav { display:flex; align-items:center; justify-content:space-between; padding:1.25rem 1.5rem; }
+.onboard-step { font-family:'DM Mono',monospace; font-size:.75rem; color:var(--gris-txt); }
+.onboard-progress { display:flex; gap:.4rem; }
+.onboard-dot { width:24px; height:3px; border-radius:2px; background:var(--gris-borde); transition:background .3s; }
+.onboard-dot.active { background:var(--acento); }
+.onboard-dot.done { background:var(--gris-txt); }
+.onboard-content { flex:1; padding:1.5rem; display:flex; flex-direction:column; }
+.onboard-title { font-family:'Bebas Neue',sans-serif; font-size:2.2rem; color:var(--blanco); letter-spacing:.05em; margin-bottom:.5rem; line-height:1; }
+.onboard-title span { color:var(--acento); }
+.onboard-desc { color:var(--gris-txt); font-size:.9rem; line-height:1.6; margin-bottom:2rem; }
+.onboard-options { display:flex; flex-direction:column; gap:.75rem; flex:1; }
+.onboard-option { background:var(--gris-med); border:2px solid var(--gris-borde); border-radius:8px; padding:1rem 1.25rem; cursor:pointer; transition:all .2s; display:flex; align-items:center; gap:1rem; }
+.onboard-option:hover { border-color:var(--gris-txt); }
+.onboard-option.selected { border-color:var(--acento); background:#1a1f00; }
+.onboard-option.selected.definicion { border-color:var(--definicion); background:#1f0e00; }
+.onboard-option.selected.transform { border-color:var(--transform); background:#001f1a; }
+.option-icon { font-size:1.8rem; width:44px; text-align:center; flex-shrink:0; }
+.option-text { flex:1; }
+.option-label { font-weight:600; font-size:.95rem; color:var(--blanco); margin-bottom:.2rem; }
+.option-desc { font-size:.8rem; color:var(--gris-txt); line-height:1.4; }
+.option-check { width:20px; height:20px; border-radius:50%; border:2px solid var(--gris-borde); flex-shrink:0; transition:all .2s; display:flex; align-items:center; justify-content:center; font-size:.7rem; }
+.onboard-option.selected .option-check { background:var(--acento); border-color:var(--acento); color:var(--negro); }
+.onboard-option.selected.definicion .option-check { background:var(--definicion); border-color:var(--definicion); }
+.onboard-option.selected.transform .option-check { background:var(--transform); border-color:var(--transform); }
+.onboard-footer { padding:1.5rem; padding-top:0; }
+
+/* ── HOME ── */
+#view-home { background:var(--negro); }
+.home-content { flex:1; padding:1.5rem; overflow-y:auto; }
+.home-hero { margin-bottom:2rem; }
+.home-greeting { font-size:.8rem; color:var(--gris-txt); text-transform:uppercase; letter-spacing:.1em; font-family:'DM Mono',monospace; margin-bottom:.25rem; }
+.home-name { font-family:'Bebas Neue',sans-serif; font-size:2.4rem; color:var(--blanco); letter-spacing:.05em; line-height:1; }
+.home-name span { color:var(--acento); }
+
+/* Plan Card */
+.plan-card { border-radius:12px; overflow:hidden; margin-bottom:1.5rem; border:1px solid var(--gris-borde); }
+.plan-card-header { padding:1.25rem; display:flex; align-items:flex-start; justify-content:space-between; }
+.plan-card-header.volumen { background: linear-gradient(135deg, #1a1f00 0%, #0f1400 100%); border-bottom:2px solid var(--volumen); }
+.plan-card-header.definicion { background: linear-gradient(135deg, #1f0e00 0%, #140800 100%); border-bottom:2px solid var(--definicion); }
+.plan-card-header.transform { background: linear-gradient(135deg, #001f1a 0%, #00140f 100%); border-bottom:2px solid var(--transform); }
+.plan-card-obj { font-family:'Bebas Neue',sans-serif; font-size:1.8rem; letter-spacing:.1em; line-height:1; }
+.plan-card-obj.volumen { color:var(--volumen); }
+.plan-card-obj.definicion { color:var(--definicion); }
+.plan-card-obj.transform { color:var(--transform); }
+.plan-card-tags { display:flex; flex-direction:column; gap:.35rem; align-items:flex-end; }
+.tag { font-family:'DM Mono',monospace; font-size:.62rem; padding:.2rem .5rem; border-radius:2px; text-transform:uppercase; letter-spacing:.06em; }
+.tag-outline { border:1px solid; }
+.tag-outline.volumen { color:var(--volumen); border-color:var(--volumen)44; }
+.tag-outline.definicion { color:var(--definicion); border-color:var(--definicion)44; }
+.tag-outline.transform { color:var(--transform); border-color:var(--transform)44; }
+.plan-card-body { background:var(--gris-med); padding:1.25rem; }
+.plan-card-info { display:grid; grid-template-columns:1fr 1fr; gap:.75rem; margin-bottom:1.25rem; }
+.info-item { }
+.info-label { font-size:.7rem; color:var(--gris-txt); text-transform:uppercase; letter-spacing:.08em; font-family:'DM Mono',monospace; margin-bottom:.2rem; }
+.info-value { font-size:.9rem; color:var(--blanco); font-weight:500; }
+
+/* Fases */
+.fases-track { display:flex; gap:.5rem; margin-bottom:1.25rem; }
+.fase-item { flex:1; border-radius:6px; padding:.6rem; text-align:center; border:1px solid var(--gris-borde); position:relative; overflow:hidden; transition:all .2s; }
+.fase-item.unlocked { background:var(--gris-osc); cursor:pointer; }
+.fase-item.unlocked:hover { border-color:var(--gris-txt); }
+.fase-item.current { border-color:var(--acento); background:#1a1f00; }
+.fase-item.current.definicion-theme { border-color:var(--definicion); background:#1f0e00; }
+.fase-item.current.transform-theme { border-color:var(--transform); background:#001f1a; }
+.fase-item.locked { opacity:.4; cursor:not-allowed; }
+.fase-num { font-family:'Bebas Neue',sans-serif; font-size:1.3rem; color:var(--blanco); letter-spacing:.05em; }
+.fase-sem { font-size:.65rem; color:var(--gris-txt); font-family:'DM Mono',monospace; }
+.fase-lock { font-size:.8rem; margin-top:.2rem; }
+.fase-badge { position:absolute; top:-1px; right:-1px; font-size:.55rem; font-family:'DM Mono',monospace; padding:.15rem .4rem; border-radius:0 0 0 4px; text-transform:uppercase; font-weight:600; }
+.fase-badge.current { background:var(--acento); color:var(--negro); }
+.fase-badge.current.definicion-theme { background:var(--definicion); }
+.fase-badge.current.transform-theme { background:var(--transform); }
+
+/* ── SECCIONES HOME ── */
+.section-title { font-family:'DM Mono',monospace; font-size:.7rem; color:var(--gris-txt); text-transform:uppercase; letter-spacing:.12em; margin-bottom:1rem; display:flex; align-items:center; gap:.75rem; }
+.section-title::after { content:''; flex:1; height:1px; background:var(--gris-borde); }
+
+/* Recursos grid */
+.recursos-grid { display:grid; grid-template-columns:1fr 1fr; gap:.75rem; margin-bottom:1.5rem; }
+.recurso-card { background:var(--gris-med); border:1px solid var(--gris-borde); border-radius:8px; padding:1rem; cursor:pointer; transition:all .2s; }
+.recurso-card:hover { border-color:var(--gris-txt); transform:translateY(-2px); }
+.recurso-icon { font-size:1.5rem; margin-bottom:.5rem; }
+.recurso-label { font-size:.8rem; font-weight:600; color:var(--blanco); margin-bottom:.2rem; }
+.recurso-desc { font-size:.7rem; color:var(--gris-txt); line-height:1.4; }
+
+/* ── BOTTOM NAV ── */
+.bottom-nav { display:flex; border-top:1px solid var(--gris-borde); background:rgba(10,10,10,.98); backdrop-filter:blur(12px); position:sticky; bottom:0; }
+.bottom-nav-item { flex:1; display:flex; flex-direction:column; align-items:center; gap:.3rem; padding:.75rem .5rem; cursor:pointer; transition:all .2s; color:var(--gris-txt); border:none; background:none; font-family:'DM Sans',sans-serif; }
+.bottom-nav-item.active { color:var(--acento); }
+.bottom-nav-item:hover { color:var(--blanco); }
+.bottom-nav-icon { font-size:1.2rem; }
+.bottom-nav-label { font-size:.6rem; text-transform:uppercase; letter-spacing:.06em; font-family:'DM Mono',monospace; }
+
+/* ── PDF VIEWER ── */
+#view-pdf { background:var(--negro); }
+.pdf-header { display:flex; align-items:center; gap:1rem; padding:1rem 1.5rem; border-bottom:1px solid var(--gris-borde); }
+.pdf-title { font-weight:600; font-size:.95rem; flex:1; }
+.pdf-subtitle { font-size:.75rem; color:var(--gris-txt); font-family:'DM Mono',monospace; }
+.pdf-body { flex:1; display:flex; align-items:center; justify-content:center; flex-direction:column; gap:1.5rem; padding:2rem 1.5rem; }
+.pdf-preview { width:100%; max-width:320px; background:var(--gris-med); border:1px solid var(--gris-borde); border-radius:12px; padding:2rem; text-align:center; }
+.pdf-preview-icon { font-size:3rem; margin-bottom:1rem; }
+.pdf-preview-name { font-weight:600; font-size:.95rem; margin-bottom:.25rem; }
+.pdf-preview-info { font-size:.75rem; color:var(--gris-txt); font-family:'DM Mono',monospace; }
+.pdf-actions { display:flex; flex-direction:column; gap:.75rem; width:100%; max-width:320px; }
+
+/* ── PERFIL ── */
+#view-perfil { background:var(--negro); }
+.perfil-content { flex:1; padding:1.5rem; overflow-y:auto; }
+.perfil-header { text-align:center; padding:1.5rem 0 2rem; }
+.perfil-avatar { width:72px; height:72px; border-radius:50%; background:var(--gris-med); border:2px solid var(--acento); display:flex; align-items:center; justify-content:center; font-size:1.8rem; margin:0 auto 1rem; }
+.perfil-nombre { font-family:'Bebas Neue',sans-serif; font-size:1.8rem; letter-spacing:.1em; margin-bottom:.25rem; }
+.perfil-email { font-size:.8rem; color:var(--gris-txt); font-family:'DM Mono',monospace; }
+.perfil-section { margin-bottom:1.5rem; }
+.perfil-row { display:flex; align-items:center; justify-content:space-between; padding:1rem; background:var(--gris-med); border:1px solid var(--gris-borde); border-radius:8px; margin-bottom:.5rem; }
+.perfil-row-label { font-size:.75rem; color:var(--gris-txt); text-transform:uppercase; letter-spacing:.06em; font-family:'DM Mono',monospace; }
+.perfil-row-value { font-size:.9rem; font-weight:500; }
+.membresia-status { display:flex; align-items:center; gap:.5rem; }
+.status-dot { width:8px; height:8px; border-radius:50%; background:#00ff88; box-shadow:0 0 6px #00ff88; }
+.status-dot.inactive { background:#ff4444; box-shadow:0 0 6px #ff4444; }
+
+/* ── ADMIN ── */
+#view-admin { background:var(--negro); }
+.admin-content { flex:1; padding:1.5rem; overflow-y:auto; }
+.admin-header { margin-bottom:2rem; }
+.admin-title { font-family:'Bebas Neue',sans-serif; font-size:2rem; color:var(--acento); letter-spacing:.1em; }
+.admin-subtitle { font-size:.8rem; color:var(--gris-txt); font-family:'DM Mono',monospace; }
+.admin-stats { display:grid; grid-template-columns:1fr 1fr; gap:.75rem; margin-bottom:2rem; }
+.stat-card { background:var(--gris-med); border:1px solid var(--gris-borde); border-radius:8px; padding:1rem; }
+.stat-number { font-family:'Bebas Neue',sans-serif; font-size:2rem; color:var(--acento); letter-spacing:.05em; line-height:1; }
+.stat-label { font-size:.7rem; color:var(--gris-txt); text-transform:uppercase; letter-spacing:.08em; font-family:'DM Mono',monospace; margin-top:.25rem; }
+.admin-table { width:100%; border-collapse:collapse; margin-top:.75rem; }
+.admin-table th { font-family:'DM Mono',monospace; font-size:.65rem; color:var(--gris-txt); text-transform:uppercase; letter-spacing:.08em; padding:.6rem .75rem; text-align:left; border-bottom:1px solid var(--gris-borde); }
+.admin-table td { font-size:.82rem; padding:.75rem; border-bottom:1px solid var(--gris-borde)88; vertical-align:middle; }
+.admin-table tr:hover td { background:var(--gris-med); }
+.fase-pill { font-family:'DM Mono',monospace; font-size:.65rem; padding:.2rem .5rem; border-radius:2px; background:var(--gris-borde); color:var(--gris-txt); }
+.fase-pill.f1 { background:#1a1f00; color:var(--volumen); }
+.fase-pill.f2 { background:#1a1500; color:#aaff00; }
+.fase-pill.f3 { background:#0f1a00; color:#88cc00; }
+
+/* ── MODAL ── */
+.modal-overlay { position:fixed; inset:0; background:rgba(0,0,0,.85); z-index:500; display:none; align-items:flex-end; justify-content:center; backdrop-filter:blur(4px); }
+.modal-overlay.open { display:flex; animation:fadeIn .2s ease; }
+.modal { background:var(--gris-osc); border:1px solid var(--gris-borde); border-radius:16px 16px 0 0; padding:1.5rem; width:100%; max-width:480px; animation:slideUp .25s ease; }
+@keyframes slideUp { from{transform:translateY(40px);opacity:0} to{transform:translateY(0);opacity:1} }
+.modal-title { font-family:'Bebas Neue',sans-serif; font-size:1.4rem; letter-spacing:.08em; margin-bottom:.5rem; }
+.modal-body { color:var(--gris-txt); font-size:.9rem; line-height:1.6; margin-bottom:1.5rem; }
+.modal-actions { display:flex; flex-direction:column; gap:.75rem; }
+
+/* ── TOAST ── */
+.toast { position:fixed; bottom:80px; left:50%; transform:translateX(-50%) translateY(20px); background:var(--gris-med); border:1px solid var(--gris-borde); color:var(--blanco); padding:.75rem 1.25rem; border-radius:8px; font-size:.85rem; opacity:0; transition:all .3s; z-index:1000; white-space:nowrap; pointer-events:none; }
+.toast.show { opacity:1; transform:translateX(-50%) translateY(0); }
+.toast.success { border-color:var(--acento); color:var(--acento); }
+
+/* ── UTILS ── */
+.text-muted { color:var(--gris-txt); }
+.text-acento { color:var(--acento); }
+.divider { height:1px; background:var(--gris-borde); margin:1.5rem 0; }
+.badge-locked { display:inline-flex; align-items:center; gap:.35rem; font-size:.75rem; color:var(--gris-txt); }
+</style>
+</head>
+<body>
+
+<!-- LOADING -->
+<div id="loading"><div class="loading-logo">CLUB</div></div>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<!-- MODAL cambio de plan -->
+<div class="modal-overlay" id="modal-cambio">
+  <div class="modal">
+    <div class="modal-title">Cambiar plan</div>
+    <div class="modal-body">Al cambiar de objetivo o nivel vas a empezar desde la Fase 1. Tu historial actual se guarda. ¿Confirmas el cambio?</div>
+    <div class="modal-actions">
+      <button class="btn btn-primary" onclick="confirmarCambio()">Confirmar cambio</button>
+      <button class="btn btn-secondary" onclick="cerrarModal('modal-cambio')">Cancelar</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL logout -->
+<div class="modal-overlay" id="modal-logout">
+  <div class="modal">
+    <div class="modal-title">Cerrar sesión</div>
+    <div class="modal-body">¿Seguro que querés cerrar sesión?</div>
+    <div class="modal-actions">
+      <button class="btn btn-danger" onclick="logout()">Cerrar sesión</button>
+      <button class="btn btn-secondary" onclick="cerrarModal('modal-logout')">Cancelar</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════ VIEW: LOGIN ══════════════ -->
+<div id="view-login" class="view">
+  <div class="login-box">
+    <div class="login-logo">CLUB</div>
+    <div class="login-sub">MatiPerezFit</div>
+    <div class="form-group">
+      <label class="form-label">Email</label>
+      <input class="form-input" type="email" id="login-email" placeholder="tu@email.com" autocomplete="email">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Contraseña</label>
+      <input class="form-input" type="password" id="login-pass" placeholder="••••••••" autocomplete="current-password">
+    </div>
+    <button class="btn btn-primary btn-full" onclick="handleLogin()">Entrar al Club</button>
+    <div class="login-error" id="login-error"></div>
+    <div class="login-divider">o</div>
+    <button class="btn btn-secondary btn-full" onclick="handleLoginAdmin()">Entrar como Admin</button>
+  </div>
+</div>
+
+<!-- ══════════════ VIEW: ONBOARDING ══════════════ -->
+<div id="view-onboarding" class="view">
+  <div class="onboard-nav">
+    <div class="onboard-step" id="ob-step-label">Paso 1 de 3</div>
+    <div class="onboard-progress">
+      <div class="onboard-dot active" id="ob-dot-1"></div>
+      <div class="onboard-dot" id="ob-dot-2"></div>
+      <div class="onboard-dot" id="ob-dot-3"></div>
+    </div>
+  </div>
+  <div class="onboard-content" id="ob-content"></div>
+  <div class="onboard-footer">
+    <button class="btn btn-primary btn-full" id="ob-btn" onclick="onboardNext()">Continuar</button>
+  </div>
+</div>
+
+<!-- ══════════════ VIEW: HOME ══════════════ -->
+<div id="view-home" class="view">
+  <nav>
+    <div class="nav-logo">CLUB</div>
+    <div class="nav-right">
+      <span class="nav-badge obj" id="nav-obj-badge"></span>
+      <span class="nav-badge fase" id="nav-fase-badge"></span>
+    </div>
+  </nav>
+  <div class="home-content">
+    <div class="home-hero">
+      <div class="home-greeting">Bienvenido de vuelta</div>
+      <div class="home-name" id="home-username">USUARIO <span>▸</span></div>
+    </div>
+
+    <!-- Plan activo -->
+    <div class="section-title">Tu plan activo</div>
+    <div class="plan-card" id="plan-card">
+      <div class="plan-card-header" id="plan-header">
+        <div>
+          <div class="plan-card-obj" id="plan-obj-label">VOLUMEN</div>
+          <div style="font-size:.75rem;color:var(--gris-txt);margin-top:.2rem;" id="plan-nivel-label">Principiante · Gimnasio</div>
+        </div>
+        <div class="plan-card-tags" id="plan-tags"></div>
+      </div>
+      <div class="plan-card-body">
+        <div class="plan-card-info" id="plan-info"></div>
+        <div class="section-title" style="margin-bottom:.75rem;">Fases</div>
+        <div class="fases-track" id="fases-track"></div>
+        <button class="btn btn-primary btn-full" id="btn-descargar" onclick="irAPDF()">
+          ↓ Descargar plan activo
+        </button>
+      </div>
+    </div>
+
+    <!-- Recursos -->
+    <div class="section-title">Recursos</div>
+    <div class="recursos-grid">
+      <div class="recurso-card" onclick="irARecurso('nutricion')">
+        <div class="recurso-icon">🥗</div>
+        <div class="recurso-label">Guía nutricional</div>
+        <div class="recurso-desc">Calorías, macros y menú de ejemplo</div>
+      </div>
+      <div class="recurso-card" onclick="irARecurso('bienvenida')">
+        <div class="recurso-icon">📋</div>
+        <div class="recurso-label">Bienvenida</div>
+        <div class="recurso-desc">Cómo usar el Club</div>
+      </div>
+    </div>
+
+    <!-- Cambiar plan -->
+    <div class="section-title">Configuración</div>
+    <button class="btn btn-secondary btn-full" style="margin-bottom:.75rem;" onclick="abrirModal('modal-cambio')">
+      ⇄ Cambiar objetivo o nivel
+    </button>
+  </div>
+  <div class="bottom-nav">
+    <button class="bottom-nav-item active" onclick="showTab('home',this)">
+      <span class="bottom-nav-icon">⊞</span>
+      <span class="bottom-nav-label">Inicio</span>
+    </button>
+    <button class="bottom-nav-item" onclick="showTab('pdf',this)">
+      <span class="bottom-nav-icon">↓</span>
+      <span class="bottom-nav-label">Mi Plan</span>
+    </button>
+    <button class="bottom-nav-item" onclick="showTab('perfil',this)">
+      <span class="bottom-nav-icon">◯</span>
+      <span class="bottom-nav-label">Perfil</span>
+    </button>
+  </div>
+</div>
+
+<!-- ══════════════ VIEW: PDF ══════════════ -->
+<div id="view-pdf" class="view">
+  <nav>
+    <div class="nav-logo">CLUB</div>
+    <div class="nav-right">
+      <span class="nav-badge obj" id="pdf-nav-badge"></span>
+    </div>
+  </nav>
+  <div class="home-content" style="overflow-y:auto;">
+    <div class="section-title">Plan activo</div>
+    <div class="plan-card" style="margin-bottom:1.5rem;">
+      <div class="plan-card-header" id="pdf-card-header">
+        <div>
+          <div class="plan-card-obj" id="pdf-obj-label"></div>
+          <div style="font-size:.75rem;color:var(--gris-txt);margin-top:.2rem;" id="pdf-nivel-label"></div>
+        </div>
+      </div>
+      <div class="plan-card-body">
+        <div class="pdf-preview" style="margin:0 0 1.25rem;max-width:100%;background:var(--gris-osc);border-radius:8px;padding:1.5rem;text-align:center;">
+          <div style="font-size:2.5rem;margin-bottom:.75rem;">📄</div>
+          <div style="font-weight:600;font-size:.9rem;margin-bottom:.25rem;" id="pdf-filename">Plan_Principiante_Volumen.pdf</div>
+          <div style="font-size:.75rem;color:var(--gris-txt);font-family:'DM Mono',monospace;" id="pdf-fase-info">Fase 1 · Semanas 1-4</div>
+        </div>
+        <button class="btn btn-primary btn-full" onclick="descargarPDF()" style="margin-bottom:.75rem;">↓ Descargar PDF</button>
+        <button class="btn btn-secondary btn-full" onclick="verPDF()">↗ Ver en pantalla</button>
+      </div>
+    </div>
+
+    <div class="section-title">Guía nutricional</div>
+    <div class="plan-card" style="margin-bottom:1.5rem;">
+      <div class="plan-card-body" style="padding:1rem;">
+        <div style="display:flex;align-items:center;gap:1rem;margin-bottom:1rem;">
+          <div style="font-size:2rem;">🥗</div>
+          <div>
+            <div style="font-weight:600;font-size:.9rem;" id="pdf-nutri-name">Guía Nutricional Volumen</div>
+            <div style="font-size:.75rem;color:var(--gris-txt);font-family:'DM Mono',monospace;">Calorías · Macros · Menú</div>
+          </div>
+        </div>
+        <button class="btn btn-secondary btn-full btn-sm" onclick="descargarNutri()">↓ Descargar guía nutricional</button>
+      </div>
+    </div>
+  </div>
+  <div class="bottom-nav">
+    <button class="bottom-nav-item" onclick="showTab('home',this)">
+      <span class="bottom-nav-icon">⊞</span><span class="bottom-nav-label">Inicio</span>
+    </button>
+    <button class="bottom-nav-item active" onclick="showTab('pdf',this)">
+      <span class="bottom-nav-icon">↓</span><span class="bottom-nav-label">Mi Plan</span>
+    </button>
+    <button class="bottom-nav-item" onclick="showTab('perfil',this)">
+      <span class="bottom-nav-icon">◯</span><span class="bottom-nav-label">Perfil</span>
+    </button>
+  </div>
+</div>
+
+<!-- ══════════════ VIEW: PERFIL ══════════════ -->
+<div id="view-perfil" class="view">
+  <nav><div class="nav-logo">CLUB</div></nav>
+  <div class="perfil-content">
+    <div class="perfil-header">
+      <div class="perfil-avatar">👤</div>
+      <div class="perfil-nombre" id="perfil-nombre">USUARIO</div>
+      <div class="perfil-email" id="perfil-email">usuario@email.com</div>
+    </div>
+    <div class="section-title">Membresía</div>
+    <div class="perfil-section">
+      <div class="perfil-row">
+        <div><div class="perfil-row-label">Estado</div><div class="perfil-row-value"><div class="membresia-status"><div class="status-dot" id="status-dot"></div><span id="status-text">Activa</span></div></div></div>
+      </div>
+      <div class="perfil-row">
+        <div><div class="perfil-row-label">Próxima renovación</div><div class="perfil-row-value" id="perfil-renovacion">15 de mayo, 2026</div></div>
+      </div>
+      <div class="perfil-row">
+        <div><div class="perfil-row-label">Fase desbloqueada</div><div class="perfil-row-value" id="perfil-fase">Fase 1</div></div>
+      </div>
+    </div>
+    <div class="section-title">Plan</div>
+    <div class="perfil-section">
+      <div class="perfil-row">
+        <div><div class="perfil-row-label">Objetivo</div><div class="perfil-row-value" id="perfil-objetivo">Volumen</div></div>
+      </div>
+      <div class="perfil-row">
+        <div><div class="perfil-row-label">Nivel</div><div class="perfil-row-value" id="perfil-nivel">Principiante</div></div>
+      </div>
+      <div class="perfil-row">
+        <div><div class="perfil-row-label">Modalidad</div><div class="perfil-row-value" id="perfil-modalidad">Gimnasio</div></div>
+      </div>
+    </div>
+    <div class="divider"></div>
+    <button class="btn btn-danger btn-full" onclick="abrirModal('modal-logout')">Cerrar sesión</button>
+  </div>
+  <div class="bottom-nav">
+    <button class="bottom-nav-item" onclick="showTab('home',this)"><span class="bottom-nav-icon">⊞</span><span class="bottom-nav-label">Inicio</span></button>
+    <button class="bottom-nav-item" onclick="showTab('pdf',this)"><span class="bottom-nav-icon">↓</span><span class="bottom-nav-label">Mi Plan</span></button>
+    <button class="bottom-nav-item active" onclick="showTab('perfil',this)"><span class="bottom-nav-icon">◯</span><span class="bottom-nav-label">Perfil</span></button>
+  </div>
+</div>
+
+<!-- ══════════════ VIEW: ADMIN ══════════════ -->
+<div id="view-admin" class="view">
+  <nav>
+    <div class="nav-logo">CLUB <span style="font-size:.7rem;color:var(--gris-txt);font-family:'DM Mono',monospace;letter-spacing:.1em;">ADMIN</span></div>
+    <div class="nav-right">
+      <button class="btn-icon" onclick="abrirModal('modal-logout')" title="Cerrar sesión">⎋</button>
+    </div>
+  </nav>
+  <div class="admin-content">
+    <div class="admin-header">
+      <div class="admin-title">Panel Admin</div>
+      <div class="admin-subtitle">Club MatiPerezFit · Vista general</div>
+    </div>
+
+    <!-- Stats -->
+    <div class="admin-stats">
+      <div class="stat-card"><div class="stat-number">24</div><div class="stat-label">Miembros activos</div></div>
+      <div class="stat-card"><div class="stat-number" style="color:var(--definicion);">3</div><div class="stat-label">Vencen este mes</div></div>
+      <div class="stat-card"><div class="stat-number" style="color:var(--transform);">48</div><div class="stat-label">PDFs descargados</div></div>
+      <div class="stat-card"><div class="stat-number">$480k</div><div class="stat-label">MRR estimado</div></div>
+    </div>
+
+    <!-- Tabs admin -->
+    <div style="display:flex;gap:.5rem;margin-bottom:1.5rem;border-bottom:1px solid var(--gris-borde);padding-bottom:1rem;">
+      <button class="btn btn-primary btn-sm" id="admin-tab-usuarios" onclick="adminTab('usuarios')">Usuarios</button>
+      <button class="btn btn-secondary btn-sm" id="admin-tab-contenido" onclick="adminTab('contenido')">Contenido</button>
+    </div>
+
+    <!-- Tab usuarios -->
+    <div id="admin-usuarios">
+      <table class="admin-table">
+        <thead>
+          <tr><th>Usuario</th><th>Objetivo</th><th>Nivel</th><th>Fase</th><th>Estado</th></tr>
+        </thead>
+        <tbody id="admin-tbody"></tbody>
+      </table>
+    </div>
+
+    <!-- Tab contenido -->
+    <div id="admin-contenido" style="display:none;">
+      <div class="section-title">PDFs cargados</div>
+      <div id="admin-pdfs-list"></div>
+      <div class="divider"></div>
+      <div class="section-title">Agregar contenido</div>
+      <div class="form-group">
+        <label class="form-label">Objetivo</label>
+        <select class="form-input" id="admin-nuevo-obj">
+          <option value="Volumen">Volumen</option>
+          <option value="Definicion">Definicion</option>
+          <option value="Transform">Transform</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Nivel</label>
+        <select class="form-input" id="admin-nuevo-nivel">
+          <option value="Principiante">Principiante</option>
+          <option value="Intermedio">Intermedio</option>
+          <option value="Avanzado">Avanzado</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Modalidad</label>
+        <select class="form-input" id="admin-nuevo-modal">
+          <option value="Gimnasio">Gimnasio</option>
+          <option value="Casa">Casa</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Fase</label>
+        <select class="form-input" id="admin-nuevo-fase">
+          <option value="1">Fase 1</option>
+          <option value="2">Fase 2</option>
+          <option value="3">Fase 3</option>
+        </select>
+      </div>
+      <button class="btn btn-primary btn-full" onclick="adminSimularSubida()">+ Registrar PDF</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ══════════════════════════════════════════
+// STATE
+// ══════════════════════════════════════════
+const USERS = {
+  'admin@matiperezfit.com': { pass:'admin123', role:'admin', nombre:'Mati' },
+  'demo@club.com':          { pass:'demo123',  role:'user',  nombre:'Juan', objetivo:'Volumen', nivel:'Principiante', modalidad:'Gimnasio', fase:1, activo:true, renovacion:'15 de mayo, 2026' },
+  'ana@club.com':           { pass:'ana123',   role:'user',  nombre:'Ana',  objetivo:'Definicion', nivel:'Intermedio', modalidad:'Gimnasio', fase:2, activo:true, renovacion:'22 de mayo, 2026' },
+  'carlos@club.com':        { pass:'c123',     role:'user',  nombre:'Carlos', objetivo:'Transform', nivel:'Avanzado', modalidad:'Gimnasio', fase:1, activo:true, renovacion:'8 de mayo, 2026' },
+};
+
+const PDF_MAP = {
+  'Volumen-Principiante-Gimnasio-1': 'Club_MatiPerezFit_Principiante_Volumen_Gimnasio_Fase1.pdf',
+  'Volumen-Principiante-Gimnasio-2': 'Club_MatiPerezFit_Principiante_Volumen_Gimnasio_Fase2.pdf',
+  'Volumen-Principiante-Gimnasio-3': 'Club_MatiPerezFit_Principiante_Volumen_Gimnasio_Fase3.pdf',
+  'Volumen-Principiante-Casa-1': 'Club_MatiPerezFit_Principiante_Volumen_Casa_Fase1.pdf',
+  'Definicion-Intermedio-Gimnasio-2': 'Club_MatiPerezFit_Intermedio_Definicion_Gimnasio_Fase2.pdf',
+  'Transform-Avanzado-Gimnasio-1': 'Club_MatiPerezFit_Avanzado_Transform_Gimnasio_Fase1.pdf',
+};
+
+const NUTRI_MAP = {
+  'Volumen': 'Club_MatiPerezFit_Guia_Nutricional_Volumen.pdf',
+  'Definicion': 'Club_MatiPerezFit_Guia_Nutricional_Definicion.pdf',
+  'Transform': 'Club_MatiPerezFit_Guia_Nutricional_Transform.pdf',
+};
+
+let currentUser = null;
+let onboardStep = 1;
+let onboardData = {};
+let pendingCambio = null;
+
+// ══════════════════════════════════════════
+// INIT
+// ══════════════════════════════════════════
+window.onload = () => {
+  setTimeout(() => {
+    document.getElementById('loading').classList.add('hidden');
+    showView('view-login');
+  }, 1200);
+};
+
+function showView(id) {
+  document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+}
+
+// ══════════════════════════════════════════
+// LOGIN
+// ══════════════════════════════════════════
+function handleLogin() {
+  const email = document.getElementById('login-email').value.trim();
+  const pass  = document.getElementById('login-pass').value;
+  const u = USERS[email];
+  if (!u || u.pass !== pass) {
+    document.getElementById('login-error').textContent = 'Email o contraseña incorrectos';
+    return;
+  }
+  document.getElementById('login-error').textContent = '';
+  currentUser = { email, ...u };
+  if (u.role === 'admin') { showAdmin(); return; }
+  if (!u.objetivo) { startOnboarding(); return; }
+  showHome();
+}
+
+function handleLoginAdmin() {
+  currentUser = { email:'admin@matiperezfit.com', ...USERS['admin@matiperezfit.com'] };
+  showAdmin();
+}
+
+function logout() {
+  currentUser = null;
+  cerrarModal('modal-logout');
+  document.getElementById('login-email').value = '';
+  document.getElementById('login-pass').value = '';
+  showView('view-login');
+}
+
+// ══════════════════════════════════════════
+// ONBOARDING
+// ══════════════════════════════════════════
+const OB_STEPS = [
+  {
+    titulo: 'Tu <span>objetivo</span>',
+    desc: 'Elegí el objetivo que mejor describe lo que buscás lograr.',
+    options: [
+      { value:'Volumen',    icon:'💪', label:'Volumen',    desc:'Ganar masa muscular. Vas a comer en superávit y entrenar para hipertrofia.', cls:''},
+      { value:'Definicion', icon:'🔥', label:'Definición', desc:'Perder grasa preservando músculo. Déficit calórico + cardio integrado.', cls:'definicion'},
+      { value:'Transform',  icon:'⚡', label:'Transform',  desc:'Recomposición corporal. Ganar músculo y perder grasa al mismo tiempo.', cls:'transform'},
+    ]
+  },
+  {
+    titulo: 'Tu <span>nivel</span>',
+    desc: 'Elegí el nivel que mejor describe tu experiencia real de entrenamiento.',
+    options: [
+      { value:'Principiante', icon:'🌱', label:'Principiante', desc:'Menos de 1 año entrenando de forma consistente. 3 días por semana.', cls:''},
+      { value:'Intermedio',   icon:'📈', label:'Intermedio',   desc:'1 a 3 años con progresión real. 4 días por semana. Solo gimnasio.', cls:''},
+      { value:'Avanzado',     icon:'🏆', label:'Avanzado',     desc:'3+ años entrenando con método. 5 días por semana. Solo gimnasio.', cls:''},
+    ]
+  },
+  {
+    titulo: 'Tu <span>modalidad</span>',
+    desc: 'Dónde vas a entrenar.',
+    options: [
+      { value:'Gimnasio', icon:'🏋️', label:'Gimnasio', desc:'Acceso a máquinas, barras y mancuernas.', cls:''},
+      { value:'Casa',     icon:'🏠', label:'Casa',     desc:'Solo disponible para nivel Principiante. Mancuernas ajustables.', cls:''},
+    ]
+  }
+];
+
+function startOnboarding() {
+  onboardStep = 1; onboardData = {};
+  renderOnboardStep();
+  showView('view-onboarding');
+}
+
+function renderOnboardStep() {
+  const s = OB_STEPS[onboardStep-1];
+  document.getElementById('ob-step-label').textContent = `Paso ${onboardStep} de 3`;
+  [1,2,3].forEach(i => {
+    const d = document.getElementById(`ob-dot-${i}`);
+    d.className = 'onboard-dot' + (i < onboardStep ? ' done' : i === onboardStep ? ' active' : '');
+  });
+  const key = ['objetivo','nivel','modalidad'][onboardStep-1];
+  const sel = onboardData[key];
+  document.getElementById('ob-content').innerHTML = `
+    <div class="onboard-title">${s.titulo}</div>
+    <div class="onboard-desc">${s.desc}</div>
+    <div class="onboard-options">
+      ${s.options.map(o => `
+        <div class="onboard-option ${o.cls} ${sel===o.value?'selected '+o.cls:''}" onclick="selectOb('${key}','${o.value}','${o.cls}',this)">
+          <div class="option-icon">${o.icon}</div>
+          <div class="option-text">
+            <div class="option-label">${o.label}</div>
+            <div class="option-desc">${o.desc}</div>
+          </div>
+          <div class="option-check">${sel===o.value?'✓':''}</div>
+        </div>`).join('')}
+    </div>`;
+  document.getElementById('ob-btn').textContent = onboardStep < 3 ? 'Continuar' : 'Empezar';
+}
+
+function selectOb(key, val, cls, el) {
+  onboardData[key] = val;
+  document.querySelectorAll('.onboard-option').forEach(o => {
+    o.classList.remove('selected','definicion','transform');
+    o.querySelector('.option-check').textContent = '';
+  });
+  el.classList.add('selected');
+  if(cls) el.classList.add(cls);
+  el.querySelector('.option-check').textContent = '✓';
+  if(key==='nivel' && val!=='Principiante') onboardData.modalidad = 'Gimnasio';
+}
+
+function onboardNext() {
+  const key = ['objetivo','nivel','modalidad'][onboardStep-1];
+  if (!onboardData[key]) { showToast('Elegí una opción para continuar'); return; }
+  if (onboardStep < 3) {
+    if (onboardStep === 2 && onboardData.nivel !== 'Principiante') {
+      onboardData.modalidad = 'Gimnasio'; onboardStep = 3;
+      renderOnboardStep(); return;
+    }
+    onboardStep++; renderOnboardStep();
+  } else {
+    currentUser.objetivo  = onboardData.objetivo;
+    currentUser.nivel     = onboardData.nivel;
+    currentUser.modalidad = onboardData.modalidad || 'Gimnasio';
+    currentUser.fase      = 1;
+    currentUser.activo    = true;
+    currentUser.renovacion = '15 de mayo, 2026';
+    showHome();
+  }
+}
+
+// ══════════════════════════════════════════
+// HOME
+// ══════════════════════════════════════════
+function showHome() {
+  updateHomeUI();
+  showView('view-home');
+  activateBottomTab('home');
+}
+
+function updateHomeUI() {
+  const u = currentUser;
+  const obj = u.objetivo, fase = u.fase, obj_lc = obj.toLowerCase();
+  document.getElementById('home-username').innerHTML = u.nombre.toUpperCase() + ' <span>▸</span>';
+
+  // Nav badges
+  const nb = document.getElementById('nav-obj-badge');
+  nb.textContent = obj; nb.className = `nav-badge obj ${obj_lc}`;
+  document.getElementById('nav-fase-badge').textContent = `F${fase}`;
+
+  // Plan card header
+  const ph = document.getElementById('plan-header');
+  ph.className = `plan-card-header ${obj_lc}`;
+  document.getElementById('plan-obj-label').className = `plan-card-obj ${obj_lc}`;
+  document.getElementById('plan-obj-label').textContent = obj.toUpperCase();
+  document.getElementById('plan-nivel-label').textContent = `${u.nivel} · ${u.modalidad}`;
+
+  // Tags
+  const tagC = {"Volumen":"volumen","Definicion":"definicion","Transform":"transform"}[obj];
+  document.getElementById('plan-tags').innerHTML = `
+    <span class="tag tag-outline ${tagC}">${u.nivel}</span>
+    <span class="tag tag-outline ${tagC}">${u.modalidad}</span>`;
+
+  // Info
+  const dias = {Principiante:'3 días/sem', Intermedio:'4 días/sem', Avanzado:'5 días/sem'}[u.nivel];
+  const dur  = {Principiante:'60-70 min', Intermedio:'70-80 min', Avanzado:'75-90 min'}[u.nivel];
+  document.getElementById('plan-info').innerHTML = `
+    <div class="info-item"><div class="info-label">Frecuencia</div><div class="info-value">${dias}</div></div>
+    <div class="info-item"><div class="info-label">Duración</div><div class="info-value">${dur}</div></div>
+    <div class="info-item"><div class="info-label">Semanas</div><div class="info-value">${(fase-1)*4+1} – ${fase*4}</div></div>
+    <div class="info-item"><div class="info-label">Modalidad</div><div class="info-value">${u.modalidad}</div></div>`;
+
+  // Fases track
+  const tClass = {"Volumen":"","Definicion":"definicion-theme","Transform":"transform-theme"}[obj];
+  let fasesHTML = '';
+  for(let i=1;i<=3;i++){
+    const sem = `${(i-1)*4+1}-${i*4}`;
+    if(i < fase) fasesHTML += `<div class="fase-item unlocked" onclick="irAFase(${i})"><div class="fase-num">${i}</div><div class="fase-sem">sem ${sem}</div><div style="font-size:.7rem;color:var(--acento);margin-top:.2rem;">✓</div></div>`;
+    else if(i === fase) fasesHTML += `<div class="fase-item current ${tClass}"><div class="fase-badge current ${tClass}">activa</div><div class="fase-num">${i}</div><div class="fase-sem">sem ${sem}</div></div>`;
+    else fasesHTML += `<div class="fase-item locked"><div class="fase-num">${i}</div><div class="fase-sem">sem ${sem}</div><div class="fase-lock">🔒</div></div>`;
+  }
+  document.getElementById('fases-track').innerHTML = fasesHTML;
+  updatePDFView();
+}
+
+function updatePDFView(){
+  const u = currentUser;
+  const obj = u.objetivo, obj_lc = obj.toLowerCase();
+  const key = `${obj}-${u.nivel}-${u.modalidad}-${u.fase}`;
+  const fname = PDF_MAP[key] || `Club_MatiPerezFit_${u.nivel}_${obj}_${u.modalidad}_Fase${u.fase}.pdf`;
+
+  const ph2 = document.getElementById('pdf-card-header');
+  if(ph2) ph2.className = `plan-card-header ${obj_lc}`;
+  const po = document.getElementById('pdf-obj-label');
+  if(po){ po.className = `plan-card-obj ${obj_lc}`; po.textContent = obj.toUpperCase(); }
+  const pn = document.getElementById('pdf-nivel-label');
+  if(pn) pn.textContent = `${u.nivel} · ${u.modalidad}`;
+  const pfn = document.getElementById('pdf-filename');
+  if(pfn) pfn.textContent = fname;
+  const pfi = document.getElementById('pdf-fase-info');
+  if(pfi) pfi.textContent = `Fase ${u.fase} · Semanas ${(u.fase-1)*4+1}-${u.fase*4}`;
+  const pnn = document.getElementById('pdf-nutri-name');
+  if(pnn) pnn.textContent = `Guía Nutricional ${obj}`;
+  const pnb = document.getElementById('pdf-nav-badge');
+  if(pnb){ pnb.textContent = obj; pnb.className = `nav-badge obj ${obj_lc}`; }
+
+  // Perfil
+  document.getElementById('perfil-nombre').textContent = u.nombre.toUpperCase();
+  document.getElementById('perfil-email').textContent = u.email;
+  document.getElementById('perfil-objetivo').textContent = obj;
+  document.getElementById('perfil-nivel').textContent = u.nivel;
+  document.getElementById('perfil-modalidad').textContent = u.modalidad;
+  document.getElementById('perfil-fase').textContent = `Fase ${u.fase}`;
+  document.getElementById('perfil-renovacion').textContent = u.renovacion || '—';
+  const dot = document.getElementById('status-dot');
+  const stxt = document.getElementById('status-text');
+  if(u.activo){ dot.className='status-dot'; stxt.textContent='Activa'; }
+  else{ dot.className='status-dot inactive'; stxt.textContent='Vencida'; }
+}
+
+// ══════════════════════════════════════════
+// NAVEGACION
+// ══════════════════════════════════════════
+function showTab(tab, el) {
+  updatePDFView();
+  const map = { home:'view-home', pdf:'view-pdf', perfil:'view-perfil' };
+  showView(map[tab]);
+  activateBottomTab(tab);
+}
+
+function activateBottomTab(tab) {
+  document.querySelectorAll('.bottom-nav-item').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('.bottom-nav-item').forEach(b => {
+    if(b.getAttribute('onclick') && b.getAttribute('onclick').includes(`'${tab}'`)) b.classList.add('active');
+  });
+}
+
+function irAPDF() { showTab('pdf', null); }
+
+function irAFase(n) {
+  if(n <= currentUser.fase){ showToast(`Fase ${n} — ya completada ✓`); }
+}
+
+function irARecurso(tipo) {
+  if(tipo === 'bienvenida'){ showToast('Descargando guía de bienvenida...'); return; }
+  showToast('Descargando guía nutricional...');
+}
+
+// ══════════════════════════════════════════
+// PDF ACTIONS
+// ══════════════════════════════════════════
+function descargarPDF() {
+  const u = currentUser;
+  const key = `${u.objetivo}-${u.nivel}-${u.modalidad}-${u.fase}`;
+  const fname = PDF_MAP[key] || `Plan_${u.objetivo}_${u.nivel}_Fase${u.fase}.pdf`;
+  showToast(`Descargando ${fname}...`, 'success');
+}
+
+function verPDF() {
+  showToast('Abriendo en pantalla...', 'success');
+}
+
+function descargarNutri() {
+  const fname = NUTRI_MAP[currentUser.objetivo] || 'Guia_Nutricional.pdf';
+  showToast(`Descargando ${fname}...`, 'success');
+}
+
+// ══════════════════════════════════════════
+// CAMBIO DE PLAN
+// ══════════════════════════════════════════
+function confirmarCambio() {
+  cerrarModal('modal-cambio');
+  currentUser.objetivo = null;
+  startOnboarding();
+}
+
+// ══════════════════════════════════════════
+// ADMIN
+// ══════════════════════════════════════════
+function showAdmin() {
+  renderAdminUsers();
+  renderAdminPDFs();
+  showView('view-admin');
+}
+
+function renderAdminUsers() {
+  const tbody = document.getElementById('admin-tbody');
+  const users = Object.entries(USERS).filter(([,u]) => u.role === 'user');
+  tbody.innerHTML = users.map(([email, u]) => `
+    <tr>
+      <td><div style="font-weight:500">${u.nombre}</div><div style="font-size:.7rem;color:var(--gris-txt);font-family:'DM Mono',monospace;">${email}</div></td>
+      <td><span style="color:var(--${(u.objetivo||'').toLowerCase()==='definicion'?'definicion':(u.objetivo||'').toLowerCase()==='transform'?'transform':'volumen'})">${u.objetivo||'—'}</span></td>
+      <td>${u.nivel||'—'}</td>
+      <td><span class="fase-pill f${u.fase||1}">F${u.fase||1}</span></td>
+      <td><div class="membresia-status"><div class="status-dot ${u.activo?'':'inactive'}"></div></div></td>
+    </tr>`).join('');
+}
+
+function renderAdminPDFs() {
+  const list = document.getElementById('admin-pdfs-list');
+  const pdfs = Object.entries(PDF_MAP);
+  list.innerHTML = pdfs.map(([key, fname]) => {
+    const [obj,,, fase] = key.split('-');
+    const col = obj==='Definicion'?'var(--definicion)':obj==='Transform'?'var(--transform)':'var(--volumen)';
+    return `<div style="display:flex;align-items:center;justify-content:space-between;padding:.75rem;background:var(--gris-med);border:1px solid var(--gris-borde);border-radius:6px;margin-bottom:.5rem;">
+      <div>
+        <div style="font-size:.8rem;font-weight:500;color:var(--blanco);">${fname}</div>
+        <div style="font-size:.7rem;color:var(--gris-txt);font-family:'DM Mono',monospace;">${key}</div>
+      </div>
+      <span style="font-family:'DM Mono',monospace;font-size:.65rem;padding:.2rem .5rem;border-radius:2px;border:1px solid;color:${col};border-color:${col}44;">F${fase}</span>
+    </div>`;
+  }).join('');
+}
+
+function adminTab(tab) {
+  document.getElementById('admin-usuarios').style.display = tab==='usuarios'?'block':'none';
+  document.getElementById('admin-contenido').style.display = tab==='contenido'?'block':'none';
+  document.getElementById('admin-tab-usuarios').className = `btn btn-sm ${tab==='usuarios'?'btn-primary':'btn-secondary'}`;
+  document.getElementById('admin-tab-contenido').className = `btn btn-sm ${tab==='contenido'?'btn-primary':'btn-secondary'}`;
+}
+
+function adminSimularSubida() {
+  const obj   = document.getElementById('admin-nuevo-obj').value;
+  const nivel = document.getElementById('admin-nuevo-nivel').value;
+  const modal = document.getElementById('admin-nuevo-modal').value;
+  const fase  = document.getElementById('admin-nuevo-fase').value;
+  const key   = `${obj}-${nivel}-${modal}-${fase}`;
+  const fname = `Club_MatiPerezFit_${nivel}_${obj}_${modal}_Fase${fase}.pdf`;
+  PDF_MAP[key] = fname;
+  showToast(`PDF registrado: ${fname}`, 'success');
+  renderAdminPDFs();
+}
+
+// ══════════════════════════════════════════
+// HELPERS
+// ══════════════════════════════════════════
+function abrirModal(id) { document.getElementById(id).classList.add('open'); }
+function cerrarModal(id) { document.getElementById(id).classList.remove('open'); }
+
+document.querySelectorAll('.modal-overlay').forEach(m => {
+  m.addEventListener('click', e => { if(e.target === m) m.classList.remove('open'); });
+});
+
+function showToast(msg, type='') {
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.className = `toast show ${type}`;
+  setTimeout(() => t.className = 'toast', 2800);
+}
+
+// Enter en login
+document.getElementById('login-pass').addEventListener('keydown', e => { if(e.key==='Enter') handleLogin(); });
+document.getElementById('login-email').addEventListener('keydown', e => { if(e.key==='Enter') handleLogin(); });
+</script>
+</body>
+</html>
