@@ -270,7 +270,7 @@ nav { display:flex; align-items:center; justify-content:space-between; padding:1
 <!-- ══════════════ VIEW: LOGIN ══════════════ -->
 <div id="view-login" class="view">
   <div class="login-box">
-    <div class="login-logo">CLUB</div>
+    <div class="login-logo" id="login-logo" onclick="secretTap()">CLUB</div>
     <div class="login-sub">MatiPerezFit</div>
     <div class="form-group">
       <label class="form-label">Email</label>
@@ -282,8 +282,7 @@ nav { display:flex; align-items:center; justify-content:space-between; padding:1
     </div>
     <button class="btn btn-primary btn-full" onclick="handleLogin()">Entrar al Club</button>
     <div class="login-error" id="login-error"></div>
-    <div class="login-divider">o</div>
-    <button class="btn btn-secondary btn-full" onclick="handleLoginAdmin()">Entrar como Admin</button>
+
   </div>
 </div>
 
@@ -597,6 +596,25 @@ window.onload = () => {
 function showView(id) {
   document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
   document.getElementById(id).classList.add('active');
+}
+
+// ══════════════════════════════════════════
+// ACCESO ADMIN SECRETO (5 taps en el logo)
+// ══════════════════════════════════════════
+const ADMIN_EMAIL = 'matii.perez7@gmail.com';
+let tapCount = 0;
+let tapTimer = null;
+
+function secretTap() {
+  tapCount++;
+  clearTimeout(tapTimer);
+  tapTimer = setTimeout(() => { tapCount = 0; }, 2000);
+  if (tapCount >= 5) {
+    tapCount = 0;
+    document.getElementById('login-email').value = ADMIN_EMAIL;
+    document.getElementById('login-pass').focus();
+    showToast('Modo admin activado');
+  }
 }
 
 // ══════════════════════════════════════════
