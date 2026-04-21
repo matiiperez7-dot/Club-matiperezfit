@@ -196,6 +196,27 @@ nav { display:flex; align-items:center; justify-content:space-between; padding:1
 .toast.success { border-color:var(--acento); color:var(--acento); }
 
 .divider { height:1px; background:var(--gris-borde); margin:1.5rem 0; }
+
+/* ── REGISTER ── */
+#view-register { align-items:center; justify-content:center; padding:2rem; background: radial-gradient(ellipse at 50% 0%, #1a1f00 0%, var(--negro) 60%); }
+.register-back { position:absolute; top:1.5rem; left:1.5rem; color:var(--gris-txt); font-size:.85rem; cursor:pointer; display:flex; align-items:center; gap:.4rem; }
+
+/* ── PAYMENT ── */
+#view-payment { align-items:center; justify-content:center; padding:2rem; background:var(--negro); }
+.payment-box { width:100%; max-width:380px; }
+.payment-title { font-family:'Bebas Neue',sans-serif; font-size:2rem; color:var(--blanco); letter-spacing:.1em; margin-bottom:.5rem; }
+.payment-subtitle { color:var(--gris-txt); font-size:.85rem; margin-bottom:2rem; line-height:1.6; }
+.payment-price { font-family:'Bebas Neue',sans-serif; font-size:3rem; color:var(--acento); letter-spacing:.05em; margin-bottom:.5rem; }
+.payment-period { font-size:.8rem; color:var(--gris-txt); margin-bottom:2rem; font-family:'DM Mono',monospace; }
+.payment-methods { display:flex; flex-direction:column; gap:.75rem; margin-bottom:1.5rem; }
+.payment-method { background:var(--gris-med); border:2px solid var(--gris-borde); border-radius:8px; padding:1rem 1.25rem; cursor:pointer; transition:all .2s; display:flex; align-items:center; gap:1rem; }
+.payment-method:hover { border-color:var(--gris-txt); }
+.payment-method.selected { border-color:var(--acento); background:#1a1f00; }
+.payment-method-icon { font-size:1.8rem; }
+.payment-method-name { font-weight:600; font-size:.95rem; }
+.payment-method-desc { font-size:.75rem; color:var(--gris-txt); }
+.payment-back { text-align:center; margin-top:1rem; color:var(--gris-txt); font-size:.8rem; cursor:pointer; }
+.payment-back:hover { color:var(--blanco); }
 </style>
 </head>
 <body>
@@ -477,6 +498,8 @@ let tapTimer = null;
 window.onload = async () => {
   const { data: { session } } = await sb.auth.getSession();
   document.getElementById('loading').classList.add('hidden');
+  const pagado = await verificarPagoExitoso();
+  if (pagado) return;
   if (session) {
     await loadProfile(session.user);
   } else {
@@ -825,5 +848,56 @@ function showToast(msg,type='') { const t=document.getElementById('toast'); t.te
 document.getElementById('login-pass').addEventListener('keydown',e=>{if(e.key==='Enter')handleLogin();});
 document.getElementById('login-email').addEventListener('keydown',e=>{if(e.key==='Enter')handleLogin();});
 </script>
+
+<!-- REGISTER -->
+<div id="view-register" class="view" style="position:relative;">
+  <div class="register-back" onclick="showView('view-login')">← Volver</div>
+  <div class="login-box">
+    <div class="login-logo" style="font-size:2.5rem;">CLUB</div>
+    <div class="login-sub" style="margin-bottom:1.5rem;">Crear cuenta</div>
+    <div class="form-group">
+      <label class="form-label">Nombre</label>
+      <input class="form-input" type="text" id="reg-nombre" placeholder="Tu nombre">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Email</label>
+      <input class="form-input" type="email" id="reg-email" placeholder="tu@email.com" autocomplete="email">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Contraseña</label>
+      <input class="form-input" type="password" id="reg-pass" placeholder="Mínimo 6 caracteres">
+    </div>
+    <button class="btn btn-primary btn-full" id="btn-register" onclick="handleRegister()">Crear cuenta</button>
+    <div class="login-error" id="register-error"></div>
+  </div>
+</div>
+
+<!-- PAYMENT -->
+<div id="view-payment" class="view">
+  <div class="payment-box">
+    <div class="payment-title">Un último paso</div>
+    <div class="payment-subtitle">Elegí cómo querés pagar tu membresía mensual al Club.</div>
+    <div class="payment-price">$25.000</div>
+    <div class="payment-period">ARS / mes · cancela cuando quieras</div>
+    <div class="payment-methods">
+      <div class="payment-method selected" id="pm-mp" onclick="selectPayment('mp')">
+        <div class="payment-method-icon">💳</div>
+        <div>
+          <div class="payment-method-name">Mercado Pago</div>
+          <div class="payment-method-desc">Tarjeta, transferencia o efectivo</div>
+        </div>
+      </div>
+      <div class="payment-method" id="pm-stripe" onclick="selectPayment('stripe')">
+        <div class="payment-method-icon">🌐</div>
+        <div>
+          <div class="payment-method-name">Tarjeta internacional</div>
+          <div class="payment-method-desc">Visa, Mastercard, Amex</div>
+        </div>
+      </div>
+    </div>
+    <button class="btn btn-primary btn-full" id="btn-pagar" onclick="procesarPago()">Ir a pagar →</button>
+    <div class="payment-back" onclick="showView('view-login')">Ya tengo cuenta — iniciar sesión</div>
+  </div>
+</div>
 </body>
 </html>
