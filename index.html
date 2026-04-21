@@ -14,6 +14,24 @@ const MP_ACCESS_TOKEN = 'APP_USR-116583118121857-031914-cdd16b66f55debaf90ff9d22
 let selectedPayment = 'mp';
 let pendingUser = null;
 
+
+function updatePaymentSummary() {
+  if (!pendingUser) return;
+  const obj = pendingUser.objetivo || '—';
+  const niv = pendingUser.nivel || '—';
+  const mod = pendingUser.modalidad || '—';
+  const dias = {Principiante:'3 días/sem', Intermedio:'4 días/sem', Avanzado:'5 días/sem'}[niv] || '—';
+  const objColors = {Volumen:'var(--volumen)', Definicion:'var(--definicion)', Transform:'var(--transform)'};
+  const el = document.getElementById('summary-objetivo');
+  if(el) { el.textContent = obj; el.style.color = objColors[obj] || 'var(--blanco)'; }
+  const nel = document.getElementById('summary-nivel');
+  if(nel) nel.textContent = niv;
+  const mel = document.getElementById('summary-modalidad');
+  if(mel) mel.textContent = mod;
+  const fel = document.getElementById('summary-frecuencia');
+  if(fel) fel.textContent = dias;
+}
+
 async function handleRegister() {
   const nombre = document.getElementById('reg-nombre').value.trim();
   const email  = document.getElementById('reg-email').value.trim();
@@ -73,9 +91,9 @@ async function activarMembresia(uid) {
   await sb.from('usuarios').upsert({
     id: uid,
     nombre: pendingUser ? pendingUser.nombre : uid,
-    objetivo: null,
-    nivel: null,
-    modalidad: null,
+    objetivo: pendingUser ? (pendingUser.objetivo || null) : null,
+    nivel: pendingUser ? (pendingUser.nivel || null) : null,
+    modalidad: pendingUser ? (pendingUser.modalidad || null) : null,
     fase_actual: 1,
     membresia_activa: true,
     fecha_renovacion: new Date(Date.now()+30*24*60*60*1000).toISOString().split('T')[0],
@@ -711,11 +729,21 @@ async function onboardNext() {
     if (onboardStep===2 && onboardData.nivel!=='Principiante') { onboardData.modalidad='Gimnasio'; onboardStep=3; renderOnboardStep(); return; }
     onboardStep++; renderOnboardStep();
   } else {
+    // Si viene del registro (pendingUser existe), ir a pago con resumen
+    if (pendingUser) {
+      pendingUser.objetivo  = onboardData.objetivo;
+      pendingUser.nivel     = onboardData.nivel;
+      pendingUser.modalidad = onboardData.modalidad || 'Gimnasio';
+      updatePaymentSummary();
+      showView('view-payment');
+      return;
+    }
+    // Si ya es usuario existente que cambia plan
     const btn = document.getElementById('ob-btn');
     btn.disabled=true; btn.textContent='Guardando...';
     const profileData = {
       id: currentUser.id,
-      nombre: currentUser.email.split('@')[0],
+      nombre: currentUser.user_metadata?.nombre || currentUser.email.split('@')[0],
       objetivo: onboardData.objetivo,
       nivel: onboardData.nivel,
       modalidad: onboardData.modalidad || 'Gimnasio',
@@ -943,6 +971,24 @@ const MP_ACCESS_TOKEN = 'APP_USR-116583118121857-031914-cdd16b66f55debaf90ff9d22
 let selectedPayment = 'mp';
 let pendingUser = null;
 
+
+function updatePaymentSummary() {
+  if (!pendingUser) return;
+  const obj = pendingUser.objetivo || '—';
+  const niv = pendingUser.nivel || '—';
+  const mod = pendingUser.modalidad || '—';
+  const dias = {Principiante:'3 días/sem', Intermedio:'4 días/sem', Avanzado:'5 días/sem'}[niv] || '—';
+  const objColors = {Volumen:'var(--volumen)', Definicion:'var(--definicion)', Transform:'var(--transform)'};
+  const el = document.getElementById('summary-objetivo');
+  if(el) { el.textContent = obj; el.style.color = objColors[obj] || 'var(--blanco)'; }
+  const nel = document.getElementById('summary-nivel');
+  if(nel) nel.textContent = niv;
+  const mel = document.getElementById('summary-modalidad');
+  if(mel) mel.textContent = mod;
+  const fel = document.getElementById('summary-frecuencia');
+  if(fel) fel.textContent = dias;
+}
+
 async function handleRegister() {
   const nombre = document.getElementById('reg-nombre').value.trim();
   const email  = document.getElementById('reg-email').value.trim();
@@ -1002,9 +1048,9 @@ async function activarMembresia(uid) {
   await sb.from('usuarios').upsert({
     id: uid,
     nombre: pendingUser ? pendingUser.nombre : uid,
-    objetivo: null,
-    nivel: null,
-    modalidad: null,
+    objetivo: pendingUser ? (pendingUser.objetivo || null) : null,
+    nivel: pendingUser ? (pendingUser.nivel || null) : null,
+    modalidad: pendingUser ? (pendingUser.modalidad || null) : null,
     fase_actual: 1,
     membresia_activa: true,
     fecha_renovacion: new Date(Date.now()+30*24*60*60*1000).toISOString().split('T')[0],
@@ -1045,11 +1091,42 @@ async function checkPagoExitoso() {
 
 <div id="view-payment" class="view">
   <div class="payment-box">
-    <div style="font-family:'Bebas Neue',sans-serif;font-size:1.4rem;color:var(--gris-txt);letter-spacing:.1em;margin-bottom:.5rem;">CLUB MATIPEREZFIT</div>
-    <div style="font-family:'Bebas Neue',sans-serif;font-size:2rem;color:var(--blanco);letter-spacing:.05em;margin-bottom:.5rem;">Tu membresía</div>
-    <div style="color:var(--gris-txt);font-size:.85rem;margin-bottom:1.5rem;line-height:1.6;">Elegí cómo querés pagar. Acceso inmediato al Club una vez confirmado el pago.</div>
-    <div class="payment-price">$25.000</div>
-    <div class="payment-period">ARS / mes · cancela cuando quieras</div>
+    <div style="font-family:'Bebas Neue',sans-serif;font-size:1.4rem;color:var(--gris-txt);letter-spacing:.1em;margin-bottom:.25rem;">CLUB MATIPEREZFIT</div>
+    <div style="font-family:'Bebas Neue',sans-serif;font-size:2rem;color:var(--blanco);letter-spacing:.05em;margin-bottom:1.25rem;">Resumen</div>
+
+    <!-- Plan summary -->
+    <div id="payment-summary" style="background:var(--gris-med);border:1px solid var(--gris-borde);border-radius:10px;padding:1.25rem;margin-bottom:1.25rem;">
+      <div style="font-size:.7rem;color:var(--gris-txt);text-transform:uppercase;letter-spacing:.1em;font-family:'DM Mono',monospace;margin-bottom:.75rem;">Tu plan</div>
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.5rem;">
+        <span style="font-size:.85rem;color:var(--gris-txt);">Objetivo</span>
+        <span style="font-weight:600;font-size:.9rem;" id="summary-objetivo">—</span>
+      </div>
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.5rem;">
+        <span style="font-size:.85rem;color:var(--gris-txt);">Nivel</span>
+        <span style="font-weight:600;font-size:.9rem;" id="summary-nivel">—</span>
+      </div>
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.5rem;">
+        <span style="font-size:.85rem;color:var(--gris-txt);">Modalidad</span>
+        <span style="font-weight:600;font-size:.9rem;" id="summary-modalidad">—</span>
+      </div>
+      <div style="display:flex;justify-content:space-between;align-items:center;">
+        <span style="font-size:.85rem;color:var(--gris-txt);">Frecuencia</span>
+        <span style="font-weight:600;font-size:.9rem;" id="summary-frecuencia">—</span>
+      </div>
+      <div style="height:1px;background:var(--gris-borde);margin:.75rem 0;"></div>
+      <div style="display:flex;justify-content:space-between;align-items:center;">
+        <span style="font-size:.85rem;color:var(--gris-txt);">Acceso</span>
+        <span style="font-size:.8rem;color:var(--gris-txt);font-family:'DM Mono',monospace;">Inmediato al pagar</span>
+      </div>
+    </div>
+
+    <!-- Price -->
+    <div style="text-align:center;margin-bottom:1.25rem;">
+      <div class="payment-price">$25.000</div>
+      <div class="payment-period">ARS / mes · cancela cuando quieras</div>
+    </div>
+
+    <!-- Payment methods -->
     <div class="payment-method selected" id="pm-mp" onclick="selectPayment('mp')">
       <div style="font-size:1.8rem;">💳</div>
       <div><div style="font-weight:600;font-size:.95rem;">Mercado Pago</div><div style="font-size:.75rem;color:var(--gris-txt);">Tarjeta, transferencia o efectivo</div></div>
