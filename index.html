@@ -6,7 +6,100 @@
 <title>Club MatiPerezFit</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2">
+// ══════════════════════════════════════════
+// REGISTRO + PAGO
+// ══════════════════════════════════════════
+const MP_ACCESS_TOKEN = 'APP_USR-116583118121857-031914-cdd16b66f55debaf90ff9d2206be7e0c-546644870';
+let selectedPayment = 'mp';
+let pendingUser = null;
+
+async function handleRegister() {
+  const nombre = document.getElementById('reg-nombre').value.trim();
+  const email  = document.getElementById('reg-email').value.trim();
+  const pass   = document.getElementById('reg-pass').value;
+  const btn    = document.getElementById('btn-register');
+  const errEl  = document.getElementById('register-error');
+  if (!nombre || !email || !pass) { errEl.textContent='Completá todos los campos'; return; }
+  if (pass.length < 6) { errEl.textContent='La contraseña debe tener al menos 6 caracteres'; return; }
+  btn.disabled=true; btn.textContent='Creando cuenta...';
+  const { data, error } = await sb.auth.signUp({ email, password:pass, options:{ data:{ nombre } } });
+  btn.disabled=false; btn.textContent='Continuar →';
+  if (error) { errEl.textContent=error.message; return; }
+  errEl.textContent='';
+  pendingUser = { id: data.user.id, nombre, email };
+  showView('view-payment');
+}
+
+function selectPayment(method) {
+  selectedPayment = method;
+  document.getElementById('pm-mp').classList.toggle('selected', method==='mp');
+  document.getElementById('pm-stripe').classList.toggle('selected', method==='stripe');
+}
+
+async function procesarPago() {
+  const btn = document.getElementById('btn-pagar');
+  if (selectedPayment === 'stripe') { showToast('Próximamente disponible. Usá Mercado Pago.'); return; }
+  btn.disabled=true; btn.textContent='Conectando...';
+  try {
+    const res = await fetch('https://api.mercadopago.com/checkout/preferences', {
+      method: 'POST',
+      headers: { 'Content-Type':'application/json', 'Authorization':'Bearer ' + MP_ACCESS_TOKEN },
+      body: JSON.stringify({
+        items:[{ title:'Club MatiPerezFit — Membresía mensual', quantity:1, unit_price:25000, currency_id:'ARS' }],
+        back_urls:{
+          success:'https://clubmatiperezfit.com/?pago=ok&uid=' + (pendingUser ? pendingUser.id : ''),
+          failure:'https://clubmatiperezfit.com/?pago=error',
+          pending:'https://clubmatiperezfit.com/?pago=pendiente',
+        },
+        auto_return:'approved',
+        external_reference: pendingUser ? pendingUser.id : 'unknown',
+      })
+    });
+    const data = await res.json();
+    if (data.init_point) {
+      window.location.href = data.init_point;
+    } else {
+      showToast('Error al generar el pago. Intentá de nuevo.');
+      btn.disabled=false; btn.textContent='Ir a pagar →';
+    }
+  } catch(e) {
+    showToast('Error de conexión.');
+    btn.disabled=false; btn.textContent='Ir a pagar →';
+  }
+}
+
+async function activarMembresia(uid) {
+  await sb.from('usuarios').upsert({
+    id: uid,
+    nombre: pendingUser ? pendingUser.nombre : uid,
+    objetivo: null,
+    nivel: null,
+    modalidad: null,
+    fase_actual: 1,
+    membresia_activa: true,
+    fecha_renovacion: new Date(Date.now()+30*24*60*60*1000).toISOString().split('T')[0],
+  });
+}
+
+async function checkPagoExitoso() {
+  const params = new URLSearchParams(window.location.search);
+  if (params.get('pago') === 'ok') {
+    const uid = params.get('uid');
+    if (uid) {
+      const { data:{ session } } = await sb.auth.getSession();
+      if (session) {
+        await activarMembresia(session.user.id);
+        currentUser = session.user;
+        await loadProfile(session.user);
+        return true;
+      }
+    }
+  }
+  return false;
+}
+
+</script>
 <style>
 :root {
   --negro: #0a0a0a;
@@ -197,26 +290,16 @@ nav { display:flex; align-items:center; justify-content:space-between; padding:1
 
 .divider { height:1px; background:var(--gris-borde); margin:1.5rem 0; }
 
-/* ── REGISTER ── */
-#view-register { align-items:center; justify-content:center; padding:2rem; background: radial-gradient(ellipse at 50% 0%, #1a1f00 0%, var(--negro) 60%); }
-.register-back { position:absolute; top:1.5rem; left:1.5rem; color:var(--gris-txt); font-size:.85rem; cursor:pointer; display:flex; align-items:center; gap:.4rem; }
-
-/* ── PAYMENT ── */
+#view-register { align-items:center; justify-content:center; padding:2rem; background: radial-gradient(ellipse at 50% 0%, #1a1f00 0%, var(--negro) 60%); position:relative; }
+.register-back { position:absolute; top:1.5rem; left:1.5rem; color:var(--gris-txt); font-size:.85rem; cursor:pointer; }
 #view-payment { align-items:center; justify-content:center; padding:2rem; background:var(--negro); }
 .payment-box { width:100%; max-width:380px; }
-.payment-title { font-family:'Bebas Neue',sans-serif; font-size:2rem; color:var(--blanco); letter-spacing:.1em; margin-bottom:.5rem; }
-.payment-subtitle { color:var(--gris-txt); font-size:.85rem; margin-bottom:2rem; line-height:1.6; }
-.payment-price { font-family:'Bebas Neue',sans-serif; font-size:3rem; color:var(--acento); letter-spacing:.05em; margin-bottom:.5rem; }
+.payment-price { font-family:'Bebas Neue',sans-serif; font-size:3rem; color:var(--acento); letter-spacing:.05em; margin-bottom:.25rem; }
 .payment-period { font-size:.8rem; color:var(--gris-txt); margin-bottom:2rem; font-family:'DM Mono',monospace; }
-.payment-methods { display:flex; flex-direction:column; gap:.75rem; margin-bottom:1.5rem; }
-.payment-method { background:var(--gris-med); border:2px solid var(--gris-borde); border-radius:8px; padding:1rem 1.25rem; cursor:pointer; transition:all .2s; display:flex; align-items:center; gap:1rem; }
-.payment-method:hover { border-color:var(--gris-txt); }
+.payment-method { background:var(--gris-med); border:2px solid var(--gris-borde); border-radius:8px; padding:1rem 1.25rem; cursor:pointer; transition:all .2s; display:flex; align-items:center; gap:1rem; margin-bottom:.75rem; }
 .payment-method.selected { border-color:var(--acento); background:#1a1f00; }
-.payment-method-icon { font-size:1.8rem; }
-.payment-method-name { font-weight:600; font-size:.95rem; }
-.payment-method-desc { font-size:.75rem; color:var(--gris-txt); }
 .payment-back { text-align:center; margin-top:1rem; color:var(--gris-txt); font-size:.8rem; cursor:pointer; }
-.payment-back:hover { color:var(--blanco); }
+
 </style>
 </head>
 <body>
@@ -261,6 +344,7 @@ nav { display:flex; align-items:center; justify-content:space-between; padding:1
     </div>
     <button class="btn btn-primary btn-full" id="btn-login" onclick="handleLogin()">Entrar al Club</button>
     <div class="login-error" id="login-error"></div>
+    <div style="text-align:center;margin-top:1rem;color:var(--gris-txt);font-size:.85rem;">¿No tenés cuenta? <span onclick="showView('view-register')" style="color:var(--acento);cursor:pointer;font-weight:600;">Registrate</span></div>
   </div>
 </div>
 
@@ -498,8 +582,12 @@ let tapTimer = null;
 window.onload = async () => {
   const { data: { session } } = await sb.auth.getSession();
   document.getElementById('loading').classList.add('hidden');
-  const pagado = await verificarPagoExitoso();
-  if (pagado) return;
+  const params = new URLSearchParams(window.location.search);
+  if (params.get('pago') === 'ok' && session) {
+    await activarMembresia(session.user.id);
+    await loadProfile(session.user);
+    return;
+  }
   if (session) {
     await loadProfile(session.user);
   } else {
@@ -847,57 +935,133 @@ document.querySelectorAll('.modal-overlay').forEach(m=>{ m.addEventListener('cli
 function showToast(msg,type='') { const t=document.getElementById('toast'); t.textContent=msg; t.className=`toast show ${type}`; setTimeout(()=>t.className='toast',2800); }
 document.getElementById('login-pass').addEventListener('keydown',e=>{if(e.key==='Enter')handleLogin();});
 document.getElementById('login-email').addEventListener('keydown',e=>{if(e.key==='Enter')handleLogin();});
+
+// ══════════════════════════════════════════
+// REGISTRO + PAGO
+// ══════════════════════════════════════════
+const MP_ACCESS_TOKEN = 'APP_USR-116583118121857-031914-cdd16b66f55debaf90ff9d2206be7e0c-546644870';
+let selectedPayment = 'mp';
+let pendingUser = null;
+
+async function handleRegister() {
+  const nombre = document.getElementById('reg-nombre').value.trim();
+  const email  = document.getElementById('reg-email').value.trim();
+  const pass   = document.getElementById('reg-pass').value;
+  const btn    = document.getElementById('btn-register');
+  const errEl  = document.getElementById('register-error');
+  if (!nombre || !email || !pass) { errEl.textContent='Completá todos los campos'; return; }
+  if (pass.length < 6) { errEl.textContent='La contraseña debe tener al menos 6 caracteres'; return; }
+  btn.disabled=true; btn.textContent='Creando cuenta...';
+  const { data, error } = await sb.auth.signUp({ email, password:pass, options:{ data:{ nombre } } });
+  btn.disabled=false; btn.textContent='Continuar →';
+  if (error) { errEl.textContent=error.message; return; }
+  errEl.textContent='';
+  pendingUser = { id: data.user.id, nombre, email };
+  showView('view-payment');
+}
+
+function selectPayment(method) {
+  selectedPayment = method;
+  document.getElementById('pm-mp').classList.toggle('selected', method==='mp');
+  document.getElementById('pm-stripe').classList.toggle('selected', method==='stripe');
+}
+
+async function procesarPago() {
+  const btn = document.getElementById('btn-pagar');
+  if (selectedPayment === 'stripe') { showToast('Próximamente disponible. Usá Mercado Pago.'); return; }
+  btn.disabled=true; btn.textContent='Conectando...';
+  try {
+    const res = await fetch('https://api.mercadopago.com/checkout/preferences', {
+      method: 'POST',
+      headers: { 'Content-Type':'application/json', 'Authorization':'Bearer ' + MP_ACCESS_TOKEN },
+      body: JSON.stringify({
+        items:[{ title:'Club MatiPerezFit — Membresía mensual', quantity:1, unit_price:25000, currency_id:'ARS' }],
+        back_urls:{
+          success:'https://clubmatiperezfit.com/?pago=ok&uid=' + (pendingUser ? pendingUser.id : ''),
+          failure:'https://clubmatiperezfit.com/?pago=error',
+          pending:'https://clubmatiperezfit.com/?pago=pendiente',
+        },
+        auto_return:'approved',
+        external_reference: pendingUser ? pendingUser.id : 'unknown',
+      })
+    });
+    const data = await res.json();
+    if (data.init_point) {
+      window.location.href = data.init_point;
+    } else {
+      showToast('Error al generar el pago. Intentá de nuevo.');
+      btn.disabled=false; btn.textContent='Ir a pagar →';
+    }
+  } catch(e) {
+    showToast('Error de conexión.');
+    btn.disabled=false; btn.textContent='Ir a pagar →';
+  }
+}
+
+async function activarMembresia(uid) {
+  await sb.from('usuarios').upsert({
+    id: uid,
+    nombre: pendingUser ? pendingUser.nombre : uid,
+    objetivo: null,
+    nivel: null,
+    modalidad: null,
+    fase_actual: 1,
+    membresia_activa: true,
+    fecha_renovacion: new Date(Date.now()+30*24*60*60*1000).toISOString().split('T')[0],
+  });
+}
+
+async function checkPagoExitoso() {
+  const params = new URLSearchParams(window.location.search);
+  if (params.get('pago') === 'ok') {
+    const uid = params.get('uid');
+    if (uid) {
+      const { data:{ session } } = await sb.auth.getSession();
+      if (session) {
+        await activarMembresia(session.user.id);
+        currentUser = session.user;
+        await loadProfile(session.user);
+        return true;
+      }
+    }
+  }
+  return false;
+}
+
 </script>
 
-<!-- REGISTER -->
-<div id="view-register" class="view" style="position:relative;">
+<div id="view-register" class="view">
   <div class="register-back" onclick="showView('view-login')">← Volver</div>
   <div class="login-box">
-    <div class="login-logo" style="font-size:2.5rem;">CLUB</div>
+    <div class="login-logo" style="font-size:2.5rem;cursor:default;">CLUB</div>
     <div class="login-sub" style="margin-bottom:1.5rem;">Crear cuenta</div>
-    <div class="form-group">
-      <label class="form-label">Nombre</label>
-      <input class="form-input" type="text" id="reg-nombre" placeholder="Tu nombre">
-    </div>
-    <div class="form-group">
-      <label class="form-label">Email</label>
-      <input class="form-input" type="email" id="reg-email" placeholder="tu@email.com" autocomplete="email">
-    </div>
-    <div class="form-group">
-      <label class="form-label">Contraseña</label>
-      <input class="form-input" type="password" id="reg-pass" placeholder="Mínimo 6 caracteres">
-    </div>
-    <button class="btn btn-primary btn-full" id="btn-register" onclick="handleRegister()">Crear cuenta</button>
+    <div class="form-group"><label class="form-label">Nombre</label><input class="form-input" type="text" id="reg-nombre" placeholder="Tu nombre"></div>
+    <div class="form-group"><label class="form-label">Email</label><input class="form-input" type="email" id="reg-email" placeholder="tu@email.com"></div>
+    <div class="form-group"><label class="form-label">Contraseña</label><input class="form-input" type="password" id="reg-pass" placeholder="Mínimo 6 caracteres"></div>
+    <button class="btn btn-primary btn-full" id="btn-register" onclick="handleRegister()">Continuar →</button>
     <div class="login-error" id="register-error"></div>
   </div>
 </div>
 
-<!-- PAYMENT -->
 <div id="view-payment" class="view">
   <div class="payment-box">
-    <div class="payment-title">Un último paso</div>
-    <div class="payment-subtitle">Elegí cómo querés pagar tu membresía mensual al Club.</div>
+    <div style="font-family:'Bebas Neue',sans-serif;font-size:1.4rem;color:var(--gris-txt);letter-spacing:.1em;margin-bottom:.5rem;">CLUB MATIPEREZFIT</div>
+    <div style="font-family:'Bebas Neue',sans-serif;font-size:2rem;color:var(--blanco);letter-spacing:.05em;margin-bottom:.5rem;">Tu membresía</div>
+    <div style="color:var(--gris-txt);font-size:.85rem;margin-bottom:1.5rem;line-height:1.6;">Elegí cómo querés pagar. Acceso inmediato al Club una vez confirmado el pago.</div>
     <div class="payment-price">$25.000</div>
     <div class="payment-period">ARS / mes · cancela cuando quieras</div>
-    <div class="payment-methods">
-      <div class="payment-method selected" id="pm-mp" onclick="selectPayment('mp')">
-        <div class="payment-method-icon">💳</div>
-        <div>
-          <div class="payment-method-name">Mercado Pago</div>
-          <div class="payment-method-desc">Tarjeta, transferencia o efectivo</div>
-        </div>
-      </div>
-      <div class="payment-method" id="pm-stripe" onclick="selectPayment('stripe')">
-        <div class="payment-method-icon">🌐</div>
-        <div>
-          <div class="payment-method-name">Tarjeta internacional</div>
-          <div class="payment-method-desc">Visa, Mastercard, Amex</div>
-        </div>
-      </div>
+    <div class="payment-method selected" id="pm-mp" onclick="selectPayment('mp')">
+      <div style="font-size:1.8rem;">💳</div>
+      <div><div style="font-weight:600;font-size:.95rem;">Mercado Pago</div><div style="font-size:.75rem;color:var(--gris-txt);">Tarjeta, transferencia o efectivo</div></div>
+    </div>
+    <div class="payment-method" id="pm-stripe" onclick="selectPayment('stripe')">
+      <div style="font-size:1.8rem;">🌐</div>
+      <div><div style="font-weight:600;font-size:.95rem;">Tarjeta internacional</div><div style="font-size:.75rem;color:var(--gris-txt);">Próximamente disponible</div></div>
     </div>
     <button class="btn btn-primary btn-full" id="btn-pagar" onclick="procesarPago()">Ir a pagar →</button>
     <div class="payment-back" onclick="showView('view-login')">Ya tengo cuenta — iniciar sesión</div>
   </div>
 </div>
+
 </body>
 </html>
