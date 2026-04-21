@@ -46,7 +46,10 @@ async function handleRegister() {
   if (error) { errEl.textContent=error.message; return; }
   errEl.textContent='';
   pendingUser = { id: data.user.id, nombre, email };
-  showView('view-payment');
+  // Ir al onboarding primero
+  onboardStep = 1; onboardData = {};
+  renderOnboardStep();
+  showView('view-onboarding');
 }
 
 function selectPayment(method) {
@@ -1003,7 +1006,10 @@ async function handleRegister() {
   if (error) { errEl.textContent=error.message; return; }
   errEl.textContent='';
   pendingUser = { id: data.user.id, nombre, email };
-  showView('view-payment');
+  // Ir al onboarding primero
+  onboardStep = 1; onboardData = {};
+  renderOnboardStep();
+  showView('view-onboarding');
 }
 
 function selectPayment(method) {
@@ -1092,7 +1098,11 @@ async function checkPagoExitoso() {
 <div id="view-payment" class="view">
   <div class="payment-box">
     <div style="font-family:'Bebas Neue',sans-serif;font-size:1.4rem;color:var(--gris-txt);letter-spacing:.1em;margin-bottom:.25rem;">CLUB MATIPEREZFIT</div>
-    <div style="font-family:'Bebas Neue',sans-serif;font-size:2rem;color:var(--blanco);letter-spacing:.05em;margin-bottom:1.25rem;">Resumen</div>
+    <div style="font-family:'Bebas Neue',sans-serif;font-size:2rem;color:var(--blanco);letter-spacing:.05em;margin-bottom:.75rem;">Resumen</div>
+    <div style="background:var(--gris-med);border-left:3px solid var(--acento);border-radius:0 6px 6px 0;padding:.75rem 1rem;margin-bottom:1.25rem;">
+      <div style="font-size:.8rem;color:var(--blanco);font-weight:600;margin-bottom:.25rem;">¿Qué incluye el Club?</div>
+      <div style="font-size:.75rem;color:var(--gris-txt);line-height:1.6;">Plan de entrenamiento personalizado · Guía nutricional con macros y menú · Sistema de fases progresivas · Acceso inmediato al pagar</div>
+    </div>
 
     <!-- Plan summary -->
     <div id="payment-summary" style="background:var(--gris-med);border:1px solid var(--gris-borde);border-radius:10px;padding:1.25rem;margin-bottom:1.25rem;">
