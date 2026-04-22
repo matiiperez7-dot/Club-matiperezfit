@@ -120,6 +120,34 @@ async function checkPagoExitoso() {
   return false;
 }
 
+
+// ══════════════════════════════════════════
+// COACHING CTA + DRIVE + TIPS
+// ══════════════════════════════════════════
+const WA_LINK = 'https://wa.link/mn1c6y';
+
+function irACoaching() {
+  window.open(WA_LINK, '_blank');
+}
+
+async function cargarTips() {
+  const lista = document.getElementById('tips-lista');
+  if (!lista) return;
+  const { data, error } = await sb.from('tips').select('*').order('created_at', { ascending: false });
+  if (error || !data || data.length === 0) {
+    lista.innerHTML = '<div style="text-align:center;padding:3rem 0;color:var(--gris-txt);font-size:.9rem;">Pronto vas a ver tips y motivación de Mati acá.</div>';
+    return;
+  }
+  const tipoLabel = { tip:'Tip', motivacion:'Motivación', nutricion:'Nutrición' };
+  lista.innerHTML = data.map(t => `
+    <div class="tip-card">
+      <span class="tip-tipo ${t.tipo||'tip'}">${tipoLabel[t.tipo||'tip']||'Tip'}</span>
+      <div class="tip-titulo">${t.titulo}</div>
+      <div class="tip-cuerpo">${t.cuerpo}</div>
+      <div class="tip-fecha" style="margin-top:.75rem;">${new Date(t.created_at).toLocaleDateString('es-AR',{day:'numeric',month:'long',year:'numeric'})}</div>
+    </div>`).join('');
+}
+
 </script>
 <style>
 :root {
@@ -321,6 +349,37 @@ nav { display:flex; align-items:center; justify-content:space-between; padding:1
 .payment-method.selected { border-color:var(--acento); background:#1a1f00; }
 .payment-back { text-align:center; margin-top:1rem; color:var(--gris-txt); font-size:.8rem; cursor:pointer; }
 
+
+/* ── TIPS BLOG ── */
+#view-tips { background:var(--negro); }
+.tips-content { flex:1; padding:1.5rem; overflow-y:auto; }
+.tip-card { background:var(--gris-med); border:1px solid var(--gris-borde); border-radius:10px; padding:1.25rem; margin-bottom:1rem; }
+.tip-fecha { font-family:'DM Mono',monospace; font-size:.65rem; color:var(--gris-txt); text-transform:uppercase; letter-spacing:.08em; margin-bottom:.5rem; }
+.tip-titulo { font-weight:600; font-size:.95rem; color:var(--blanco); margin-bottom:.5rem; line-height:1.4; }
+.tip-cuerpo { font-size:.85rem; color:var(--gris-txt); line-height:1.6; }
+.tip-tipo { display:inline-block; font-family:'DM Mono',monospace; font-size:.6rem; padding:.15rem .45rem; border-radius:2px; text-transform:uppercase; letter-spacing:.06em; margin-bottom:.5rem; }
+.tip-tipo.tip { background:#1a1f00; color:var(--acento); }
+.tip-tipo.motivacion { background:#001f1a; color:var(--transform); }
+.tip-tipo.nutricion { background:#1f0e00; color:var(--definicion); }
+
+/* ── CTA COACHING ── */
+.coaching-cta { background: linear-gradient(135deg, #1a1f00 0%, #0f1400 100%); border:1px solid var(--acento)44; border-radius:10px; padding:1.25rem; margin-bottom:1.5rem; display:flex; align-items:center; gap:1rem; cursor:pointer; transition:all .2s; }
+.coaching-cta:hover { border-color:var(--acento); }
+.coaching-cta-icon { font-size:1.8rem; flex-shrink:0; }
+.coaching-cta-text { flex:1; }
+.coaching-cta-title { font-weight:600; font-size:.9rem; color:var(--blanco); margin-bottom:.2rem; }
+.coaching-cta-desc { font-size:.75rem; color:var(--gris-txt); line-height:1.4; }
+.coaching-cta-arrow { color:var(--acento); font-size:1.2rem; }
+
+/* ── RECURSOS LINKS ── */
+.resource-link { background:var(--gris-med); border:1px solid var(--gris-borde); border-radius:8px; padding:1rem 1.25rem; margin-bottom:.75rem; display:flex; align-items:center; gap:1rem; cursor:pointer; transition:all .2s; text-decoration:none; }
+.resource-link:hover { border-color:var(--gris-txt); transform:translateY(-1px); }
+.resource-link-icon { font-size:1.5rem; flex-shrink:0; }
+.resource-link-text { flex:1; }
+.resource-link-name { font-weight:600; font-size:.9rem; color:var(--blanco); margin-bottom:.15rem; }
+.resource-link-desc { font-size:.75rem; color:var(--gris-txt); }
+.resource-link-arrow { color:var(--gris-txt); font-size:1rem; }
+
 </style>
 </head>
 <body>
@@ -415,7 +474,25 @@ nav { display:flex; align-items:center; justify-content:space-between; padding:1
         <button class="btn btn-primary btn-full" onclick="showTab('pdf')">↓ Descargar plan activo</button>
       </div>
     </div>
+    <!-- Coaching CTA -->
+    <div class="coaching-cta" onclick="irACoaching()">
+      <div class="coaching-cta-icon">🏆</div>
+      <div class="coaching-cta-text">
+        <div class="coaching-cta-title">Coaching 1 a 1 con Mati</div>
+        <div class="coaching-cta-desc">Plan 100% personalizado · Seguimiento semanal · Resultados reales</div>
+      </div>
+      <div class="coaching-cta-arrow">→</div>
+    </div>
+
     <div class="section-title">Recursos</div>
+    <a class="resource-link" href="https://drive.google.com/drive/folders/1-04kstJYeGq78vLQ9vKJFVC17MUs7tWB" target="_blank">
+      <div class="resource-link-icon">🎥</div>
+      <div class="resource-link-text">
+        <div class="resource-link-name">Biblioteca de ejercicios</div>
+        <div class="resource-link-desc">Videos y técnica de cada ejercicio</div>
+      </div>
+      <div class="resource-link-arrow">↗</div>
+    </a>
     <div class="recursos-grid">
       <div class="recurso-card" onclick="descargarGuia()">
         <div class="recurso-icon">🥗</div>
@@ -477,9 +554,10 @@ nav { display:flex; align-items:center; justify-content:space-between; padding:1
     </div>
   </div>
   <div class="bottom-nav">
-    <button class="bottom-nav-item" onclick="showTab('home',this)"><span class="bottom-nav-icon">⊞</span><span class="bottom-nav-label">Inicio</span></button>
-    <button class="bottom-nav-item active" onclick="showTab('pdf',this)"><span class="bottom-nav-icon">↓</span><span class="bottom-nav-label">Mi Plan</span></button>
-    <button class="bottom-nav-item" onclick="showTab('perfil',this)"><span class="bottom-nav-icon">◯</span><span class="bottom-nav-label">Perfil</span></button>
+    <button class="bottom-nav-item" onclick="showTab('home')"><span class="bottom-nav-icon">⊞</span><span class="bottom-nav-label">Inicio</span></button>
+    <button class="bottom-nav-item active" onclick="showTab('pdf')"><span class="bottom-nav-icon">↓</span><span class="bottom-nav-label">Mi Plan</span></button>
+    <button class="bottom-nav-item" onclick="showTab('tips')"><span class="bottom-nav-icon">💡</span><span class="bottom-nav-label">Tips</span></button>
+    <button class="bottom-nav-item" onclick="showTab('perfil')"><span class="bottom-nav-icon">◯</span><span class="bottom-nav-label">Perfil</span></button>
   </div>
 </div>
 
@@ -508,9 +586,10 @@ nav { display:flex; align-items:center; justify-content:space-between; padding:1
     <button class="btn btn-danger btn-full" onclick="abrirModal('modal-logout')">Cerrar sesión</button>
   </div>
   <div class="bottom-nav">
-    <button class="bottom-nav-item" onclick="showTab('home',this)"><span class="bottom-nav-icon">⊞</span><span class="bottom-nav-label">Inicio</span></button>
-    <button class="bottom-nav-item" onclick="showTab('pdf',this)"><span class="bottom-nav-icon">↓</span><span class="bottom-nav-label">Mi Plan</span></button>
-    <button class="bottom-nav-item active" onclick="showTab('perfil',this)"><span class="bottom-nav-icon">◯</span><span class="bottom-nav-label">Perfil</span></button>
+    <button class="bottom-nav-item" onclick="showTab('home')"><span class="bottom-nav-icon">⊞</span><span class="bottom-nav-label">Inicio</span></button>
+    <button class="bottom-nav-item" onclick="showTab('pdf')"><span class="bottom-nav-icon">↓</span><span class="bottom-nav-label">Mi Plan</span></button>
+    <button class="bottom-nav-item" onclick="showTab('tips')"><span class="bottom-nav-icon">💡</span><span class="bottom-nav-label">Tips</span></button>
+    <button class="bottom-nav-item active" onclick="showTab('perfil')"><span class="bottom-nav-icon">◯</span><span class="bottom-nav-label">Perfil</span></button>
   </div>
 </div>
 
@@ -529,9 +608,10 @@ nav { display:flex; align-items:center; justify-content:space-between; padding:1
       <div class="stat-card"><div class="stat-number" id="stat-activos">—</div><div class="stat-label">Miembros activos</div></div>
       <div class="stat-card"><div class="stat-number" id="stat-total" style="color:var(--transform);">—</div><div class="stat-label">Total usuarios</div></div>
     </div>
-    <div style="display:flex;gap:.5rem;margin-bottom:1.5rem;border-bottom:1px solid var(--gris-borde);padding-bottom:1rem;">
+    <div style="display:flex;gap:.5rem;margin-bottom:1.5rem;border-bottom:1px solid var(--gris-borde);padding-bottom:1rem;flex-wrap:wrap;">
       <button class="btn btn-primary btn-sm" id="admin-tab-usuarios" onclick="adminTab('usuarios')">Usuarios</button>
-      <button class="btn btn-secondary btn-sm" id="admin-tab-nuevo" onclick="adminTab('nuevo')">+ Nuevo usuario</button>
+      <button class="btn btn-secondary btn-sm" id="admin-tab-nuevo" onclick="adminTab('nuevo')">+ Usuario</button>
+      <button class="btn btn-secondary btn-sm" id="admin-tab-tips" onclick="adminTab('tips')">+ Tip</button>
     </div>
     <div id="admin-usuarios">
       <table class="admin-table">
@@ -935,8 +1015,25 @@ async function crearUsuario() {
 function adminTab(tab) {
   document.getElementById('admin-usuarios').style.display=tab==='usuarios'?'block':'none';
   document.getElementById('admin-nuevo').style.display=tab==='nuevo'?'block':'none';
+  document.getElementById('admin-tips').style.display=tab==='tips'?'block':'none';
   document.getElementById('admin-tab-usuarios').className=`btn btn-sm ${tab==='usuarios'?'btn-primary':'btn-secondary'}`;
   document.getElementById('admin-tab-nuevo').className=`btn btn-sm ${tab==='nuevo'?'btn-primary':'btn-secondary'}`;
+  document.getElementById('admin-tab-tips').className=`btn btn-sm ${tab==='tips'?'btn-primary':'btn-secondary'}`;
+}
+
+async function publicarTip() {
+  const tipo   = document.getElementById('tip-tipo').value;
+  const titulo = document.getElementById('tip-titulo').value.trim();
+  const cuerpo = document.getElementById('tip-cuerpo').value.trim();
+  if (!titulo || !cuerpo) { showToast('Completá título y contenido'); return; }
+  const btn = document.getElementById('btn-publicar-tip');
+  btn.disabled=true; btn.textContent='Publicando...';
+  const { error } = await sb.from('tips').insert({ tipo, titulo, cuerpo });
+  btn.disabled=false; btn.textContent='Publicar tip';
+  if (error) { showToast('Error al publicar: ' + error.message); return; }
+  showToast('Tip publicado', 'success');
+  document.getElementById('tip-titulo').value='';
+  document.getElementById('tip-cuerpo').value='';
 }
 
 // ══════════════════════════════════════════
@@ -944,15 +1041,20 @@ function adminTab(tab) {
 // ══════════════════════════════════════════
 function showTab(tab) {
   updatePDFView();
-  const map={home:'view-home',pdf:'view-pdf',perfil:'view-perfil'};
+  const map={home:'view-home',pdf:'view-pdf',perfil:'view-perfil',tips:'view-tips'};
   showView(map[tab]);
-  activateBottomTab(tab);
+  if(tab==='tips') cargarTips();
+  // Update all bottom navs
+  document.querySelectorAll('.bottom-nav-item').forEach(b=>{
+    const oc = b.getAttribute('onclick')||'';
+    b.classList.toggle('active', oc.includes("'"+tab+"'"));
+  });
 }
 
 function activateBottomTab(tab) {
-  document.querySelectorAll('.bottom-nav-item').forEach(b=>b.classList.remove('active'));
   document.querySelectorAll('.bottom-nav-item').forEach(b=>{
-    if(b.getAttribute('onclick')&&b.getAttribute('onclick').includes(`'${tab}'`)) b.classList.add('active');
+    const oc = b.getAttribute('onclick')||'';
+    b.classList.toggle('active', oc.includes("'"+tab+"'"));
   });
 }
 
@@ -1080,6 +1182,34 @@ async function checkPagoExitoso() {
   return false;
 }
 
+
+// ══════════════════════════════════════════
+// COACHING CTA + DRIVE + TIPS
+// ══════════════════════════════════════════
+const WA_LINK = 'https://wa.link/mn1c6y';
+
+function irACoaching() {
+  window.open(WA_LINK, '_blank');
+}
+
+async function cargarTips() {
+  const lista = document.getElementById('tips-lista');
+  if (!lista) return;
+  const { data, error } = await sb.from('tips').select('*').order('created_at', { ascending: false });
+  if (error || !data || data.length === 0) {
+    lista.innerHTML = '<div style="text-align:center;padding:3rem 0;color:var(--gris-txt);font-size:.9rem;">Pronto vas a ver tips y motivación de Mati acá.</div>';
+    return;
+  }
+  const tipoLabel = { tip:'Tip', motivacion:'Motivación', nutricion:'Nutrición' };
+  lista.innerHTML = data.map(t => `
+    <div class="tip-card">
+      <span class="tip-tipo ${t.tipo||'tip'}">${tipoLabel[t.tipo||'tip']||'Tip'}</span>
+      <div class="tip-titulo">${t.titulo}</div>
+      <div class="tip-cuerpo">${t.cuerpo}</div>
+      <div class="tip-fecha" style="margin-top:.75rem;">${new Date(t.created_at).toLocaleDateString('es-AR',{day:'numeric',month:'long',year:'numeric'})}</div>
+    </div>`).join('');
+}
+
 </script>
 
 <div id="view-register" class="view">
@@ -1147,6 +1277,39 @@ async function checkPagoExitoso() {
     </div>
     <button class="btn btn-primary btn-full" id="btn-pagar" onclick="procesarPago()">Ir a pagar →</button>
     <div class="payment-back" onclick="showView('view-login')">Ya tengo cuenta — iniciar sesión</div>
+  </div>
+</div>
+
+
+<!-- TIPS -->
+<div id="view-tips" class="view">
+  <nav>
+    <div class="nav-logo">CLUB</div>
+    <div class="nav-right"><span style="font-size:.75rem;color:var(--gris-txt);font-family:'DM Mono',monospace;">DE MATI</span></div>
+  </nav>
+  <div class="tips-content">
+    <div class="section-title">Tips y motivación</div>
+    <div id="tips-lista">
+      <div style="text-align:center;padding:3rem 0;color:var(--gris-txt);font-size:.9rem;">Cargando...</div>
+    </div>
+
+    <!-- Coaching CTA en tips -->
+    <div style="margin-top:1rem;">
+      <div class="coaching-cta" onclick="irACoaching()">
+        <div class="coaching-cta-icon">🏆</div>
+        <div class="coaching-cta-text">
+          <div class="coaching-cta-title">¿Querés más?</div>
+          <div class="coaching-cta-desc">Coaching 1 a 1 con seguimiento personalizado</div>
+        </div>
+        <div class="coaching-cta-arrow">→</div>
+      </div>
+    </div>
+  </div>
+  <div class="bottom-nav">
+    <button class="bottom-nav-item" onclick="showTab('home')"><span class="bottom-nav-icon">⊞</span><span class="bottom-nav-label">Inicio</span></button>
+    <button class="bottom-nav-item" onclick="showTab('pdf')"><span class="bottom-nav-icon">↓</span><span class="bottom-nav-label">Mi Plan</span></button>
+    <button class="bottom-nav-item active" onclick="showTab('tips')"><span class="bottom-nav-icon">💡</span><span class="bottom-nav-label">Tips</span></button>
+    <button class="bottom-nav-item" onclick="showTab('perfil')"><span class="bottom-nav-icon">◯</span><span class="bottom-nav-label">Perfil</span></button>
   </div>
 </div>
 
