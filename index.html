@@ -650,14 +650,17 @@ const ADMIN_EMAIL = 'matii.perez7@gmail.com';
 
 // ── Mapeo de paths en Storage ──
 function getPlanPath(objetivo, nivel, modalidad, fase) {
-  const obj = objetivo.toLowerCase();
-  const niv = nivel.toLowerCase();
+  // Capitalize first letter to match Storage filenames
+  const cap = s => s.charAt(0).toUpperCase() + s.slice(1).toLowerCase();
+  const obj = cap(objetivo);
+  const niv = cap(nivel);
   const mod = modalidad.toLowerCase();
   return `${niv}:${obj}:${mod}:fase${fase}.pdf`;
 }
 
 function getGuiaPath(objetivo) {
-  return `guia_${objetivo.toLowerCase()}.pdf`;
+  const cap = s => s.charAt(0).toUpperCase() + s.slice(1).toLowerCase();
+  return `guia_${cap(objetivo)}.pdf`;
 }
 
 // ── Generar URL firmada para descarga ──
