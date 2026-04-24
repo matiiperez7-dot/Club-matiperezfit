@@ -650,12 +650,16 @@ const ADMIN_EMAIL = 'matii.perez7@gmail.com';
 
 // ── Mapeo de paths en Storage ──
 function getPlanPath(objetivo, nivel, modalidad, fase) {
-  // Capitalize first letter to match Storage filenames
-  const cap = s => s.charAt(0).toUpperCase() + s.slice(1).toLowerCase();
-  const obj = cap(objetivo);
-  const niv = cap(nivel);
   const mod = modalidad.toLowerCase();
-  return `${niv}:${obj}:${mod}:fase${fase}.pdf`;
+  const objMap = { 'Volumen':'volumen', 'Definicion':'definicion', 'Transform':'transformacion' };
+  const obj = objMap[objetivo] || objetivo.toLowerCase();
+  if (nivel === 'Avanzado') {
+    return `Avanzado:${obj}:${mod}:fase${fase}.pdf`;
+  } else if (nivel === 'Intermedio') {
+    return `intermedio:${obj}:${mod}:fase${fase}.pdf`;
+  } else {
+    return `principiante:${obj}:${mod}:fase${fase}.pdf`;
+  }
 }
 
 function getGuiaPath(objetivo) {
@@ -665,8 +669,8 @@ function getGuiaPath(objetivo) {
 
 // ── Generar URL firmada para descarga ──
 async function getSignedUrl(bucket, path) {
-  const { data, error } = await sb.storage.from(bucket).createSignedUrl(path, 60);
-  if (error) { console.error(error); return null; }
+  const { data, error } = await sb.storage.from(bucket).createSignedUrl(path, 300);
+  if (error) { console.error('Storage error:', error.message, 'path:', path); return null; }
   return data.signedUrl;
 }
 
