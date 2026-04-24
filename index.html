@@ -663,8 +663,13 @@ function getPlanPath(objetivo, nivel, modalidad, fase) {
 }
 
 function getGuiaPath(objetivo) {
-  const cap = s => s.charAt(0).toUpperCase() + s.slice(1).toLowerCase();
-  return `guia_${cap(objetivo)}.pdf`;
+  const objMap = {
+    'Volumen': 'volumen',
+    'Definicion': 'definicion',
+    'Transform': 'transformacion'
+  };
+  const obj = objMap[objetivo] || objetivo.toLowerCase();
+  return `guia_${obj}.pdf`;
 }
 
 // ── Generar URL firmada para descarga ──
@@ -928,13 +933,25 @@ function updatePerfilView() {
 // ══════════════════════════════════════════
 // DESCARGAS REALES DESDE SUPABASE STORAGE
 // ══════════════════════════════════════════
+function abrirEnlace(url, nombre) {
+  // Usar anchor tag para evitar bloqueo de popups en iOS Safari
+  const a = document.createElement('a');
+  a.href = url;
+  a.target = '_blank';
+  a.rel = 'noopener noreferrer';
+  a.download = nombre || 'plan.pdf';
+  document.body.appendChild(a);
+  a.click();
+  setTimeout(() => document.body.removeChild(a), 100);
+}
+
 async function descargarPDF() {
   if (!currentProfile) return;
   const path = getPlanPath(currentProfile.objetivo, currentProfile.nivel, currentProfile.modalidad, currentProfile.fase_actual);
   showToast('Generando enlace...', 'success');
   const url = await getSignedUrl('planes', path);
   if (!url) { showToast('Error al obtener el archivo. Contactá a Mati.'); return; }
-  window.open(url, '_blank');
+  abrirEnlace(url, path);
 }
 
 async function descargarGuia() {
@@ -943,14 +960,14 @@ async function descargarGuia() {
   showToast('Generando enlace...', 'success');
   const url = await getSignedUrl('guias', path);
   if (!url) { showToast('Error al obtener la guía.'); return; }
-  window.open(url, '_blank');
+  abrirEnlace(url, path);
 }
 
 async function descargarBienvenida() {
   showToast('Generando enlace...', 'success');
   const url = await getSignedUrl('guias', 'bienvenida.pdf');
   if (!url) { showToast('Error al obtener el archivo.'); return; }
-  window.open(url, '_blank');
+  abrirEnlace(url, 'bienvenida.pdf');
 }
 
 // ══════════════════════════════════════════
