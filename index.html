@@ -934,15 +934,20 @@ function updatePerfilView() {
 // DESCARGAS REALES DESDE SUPABASE STORAGE
 // ══════════════════════════════════════════
 function abrirEnlace(url, nombre) {
-  // Usar anchor tag para evitar bloqueo de popups en iOS Safari
-  const a = document.createElement('a');
-  a.href = url;
-  a.target = '_blank';
-  a.rel = 'noopener noreferrer';
-  a.download = nombre || 'plan.pdf';
-  document.body.appendChild(a);
-  a.click();
-  setTimeout(() => document.body.removeChild(a), 100);
+  // iOS Safari: abrir directamente en la misma ventana
+  const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+  if (isIOS) {
+    window.location.href = url;
+  } else {
+    const a = document.createElement('a');
+    a.href = url;
+    a.target = '_blank';
+    a.rel = 'noopener noreferrer';
+    a.download = nombre || 'plan.pdf';
+    document.body.appendChild(a);
+    a.click();
+    setTimeout(() => document.body.removeChild(a), 100);
+  }
 }
 
 async function descargarPDF() {
